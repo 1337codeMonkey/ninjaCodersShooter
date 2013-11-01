@@ -8,9 +8,13 @@ import java.nio.ShortBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.util.Log;
 
@@ -19,6 +23,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     private static final String TAG = "MyGLRenderer";
     private Triangle mTriangle;
     private Square   mSquare;
+    private Square background;
 
     private final float[] mMVPMatrix = new float[16];
     private final float[] mScratch = new float[16];
@@ -43,20 +48,34 @@ public class glRenderer implements GLSurfaceView.Renderer {
     public int bulletOnScreen = 0;
     boolean done = false;
     long currentTime;
+    private Context context;
 
+    
+    public glRenderer(Context context) {
+    
+    	    this.context = context;
+ 
+    	
+    	}
     @Override
+
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
 
         // Set the background frame color
+    	
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
        currentTime = System.currentTimeMillis();
        lastFrameTime = currentTime;
 
         mTriangle = new Triangle();
+        mTriangle.loadGLTexture(unused, this.context);
+        background = new Square(0.0f,0.0f,1.0f,1.0f);
+        background.loadGLTexture(unused, this.context);
         //mSquare = new Square(0.0f,-0.75f,0.025f,0.05f);
+        
        
         
-    }
+    };
 
     @Override
     public void onDrawFrame(GL10 unused) {
@@ -70,24 +89,27 @@ public class glRenderer implements GLSurfaceView.Renderer {
         // Calculate the projection and view transformation
    
         Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mVMatrix, 0);
+        //background.draw(mMVPMatrix);
+        
        
         rendership();
       
        
-    	update(); 
-    	renderbullet();
+    	update(unused); 
+    	renderbullet(unused);
     	
     }
     
-    public void update(){
+    public void update(GL10 gl){
     	currentTime =  System.currentTimeMillis();
     	float elapsed = (currentTime - lastFrameTime) * .001f;//convert ms to seconds
-    	dy =  elapsed*7.0f;
+    	dy =  elapsed*3.0f;
     	lastFrameTime = currentTime; 
     	if(isShooting){
     		if (bulletOnScreen <=MAX_BULLET) {
     			if (bulletCount == MAX_BULLET) bulletCount = 0;
     		 bulletArray[bulletCount]   = new Square(mTriangle.getTopVertexX()+0.0f,mTriangle.getTopVertexY()+.025f,0.025f,0.05f);
+    		 bulletArray[bulletCount].loadGLTexture(gl, this.context);
     		 bulletCount++;
     		 if(bulletOnScreen<MAX_BULLET)
     		 bulletOnScreen++;
@@ -97,7 +119,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	
     }
     
-    public void renderbullet(){
+    public void renderbullet(GL10 gl){
     	if(bulletCount >1)
         for( int i = 0; i<bulletOnScreen; i++){
         	bulletArray[i].dy+=dy;
@@ -105,6 +127,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
             Matrix.setIdentityM(mTranslationMatrix, 0);
             Matrix.translateM(mTranslationMatrix, 0, 0, bulletArray[i].dy, 0);
             Matrix.multiplyMM(mScratch, 0,mMVPMatrix, 0, mTranslationMatrix , 0);
+            //bulletArray[i].loadGLTexture(gl, this.context);
             bulletArray[i].draw(mScratch);
         }
     	
@@ -141,6 +164,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     public void onSurfaceChanged(GL10 unused, int width, int height) {
         // Adjust the viewport based on geometry changes,
         // such as screen rotation
+    	
         GLES20.glViewport(0, 0, width, height);
 
         float ratio = (float) width / height;
@@ -191,30 +215,40 @@ class Triangle {
         // This matrix member variable provides a hook to manipulate
         // the coordinates of the objects that use this vertex shader
         "uniform mat4 uMVPMatrix;" +
-
+        "attribute vec2 a_TextureCoordinates;" +
+        "varying vec2 v_TextureCoordinates;"+
         "attribute vec4 vPosition;" +
         "void main() {" +
         // the matrix must be included as a modifier of gl_Position
         "  gl_Position = uMVPMatrix * vPosition;" +
+        "  v_TextureCoordinates = a_TextureCoordinates;" +
         "}";
 
     private final String fragmentShaderCode =
         "precision mediump float;" +
         "uniform vec4 vColor;" +
+        "uniform sampler2D u_TextureUnit;"+
+        "varying vec2 v_TextureCoordinates;"+
         "void main() {" +
-        "  gl_FragColor = vColor;" +
+        "  gl_FragColor = texture2D(u_TextureUnit, v_TextureCoordinates);" +
         "}";
 
     private final FloatBuffer vertexBuffer;
+    private FloatBuffer textureBuffer;
     private final int mProgram;
     private int mPositionHandle;
     private int mColorHandle;
     private int mMVPMatrixHandle;
+    static final int COORDS_PER_TEXTURE = 2;
+    float textureCoords[];
+    private int[] textures = new int[1];
+    private int mTextureUniformHandle;
+    private int mTextureCoordinateHandle;
 
     // number of coordinates per vertex in this array
     static final int COORDS_PER_VERTEX = 3;
     static float triangleCoords[] = { // in counterclockwise order:
-         0.0f,  -0.8f, 0.0f,   // top
+         0.0f,  -0.7f, 0.0f,   // top
         -0.1f, -0.9f, 0.0f,   // bottom left
          0.1f, -0.9f, 0.0f    // bottom right
     };
@@ -238,6 +272,19 @@ class Triangle {
         vertexBuffer.put(triangleCoords);
         // set the buffer to read the first coordinate
         vertexBuffer.position(0);
+        
+        float textureCoords[] = { 0.0f, 0.0f,
+                0.0f, 1.0f,
+                0.5f, 1.0f,
+                };
+   	 	this.textureCoords = textureCoords;
+        
+        bb= ByteBuffer.allocateDirect(textureCoords.length * 4);
+        bb.order(ByteOrder.nativeOrder());
+        textureBuffer = bb.asFloatBuffer();
+        textureBuffer.put(textureCoords);
+        textureBuffer.position(0);
+
 
         // prepare shaders and OpenGL program
         int vertexShader = glRenderer.loadShader(GLES20.GL_VERTEX_SHADER,
@@ -259,7 +306,7 @@ class Triangle {
     }
     
     public void setTopVertexY(float dy){
-    	triangleCoords[1]= -0.8f+dy;
+    	triangleCoords[1]= -0.7f+dy;
     	
     }
     
@@ -271,6 +318,38 @@ class Triangle {
     public float getTopVertexX()
     {
     	return triangleCoords[0];
+    }
+    
+    public void loadGLTexture(GL10 gl, Context context) {
+    	final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;   // No pre-scaling
+    	// loading texture
+    	
+    	Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(),
+    			R.drawable.airplane,options);
+    	
+    	// generate one texture pointer
+    	gl.glGenTextures(1, textures, 0);
+        // ...and bind it to our array
+        gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
+        // create nearest filtered texture
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
+    	gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
+    	
+    	//Different possible texture parameters, e.g. GL10.GL_CLAMP_TO_EDGE
+    	
+    	//gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, GL10.GL_REPEAT);
+    	
+    	//gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T, GL10.GL_REPEAT);
+
+    	 //Use Android GLUtils to specify a two-dimensional texture image from our bitmap
+    
+    	 GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
+    
+    	 // Clean up
+    	
+    	 bitmap.recycle();
+    	
     }
 
     public void draw(float[] mvpMatrix) {
@@ -287,6 +366,25 @@ class Triangle {
         GLES20.glVertexAttribPointer(mPositionHandle, COORDS_PER_VERTEX,
                                      GLES20.GL_FLOAT, false,
                                      vertexStride, vertexBuffer);
+        GLES20.glEnableVertexAttribArray(mTextureCoordinateHandle);
+        GLES20.glVertexAttribPointer(mTextureCoordinateHandle, COORDS_PER_TEXTURE,
+                                     GLES20.GL_FLOAT, false,
+                                     0, textureBuffer);
+     // Set color for drawing the triangle
+        //GLES20.glUniform4fv(mColorHandle, 1, color, 0);
+        
+        mTextureUniformHandle = GLES20.glGetUniformLocation(mProgram, "u_Texture");
+        mTextureCoordinateHandle = GLES20.glGetAttribLocation(mProgram, "a_TexCoordinate");
+     
+        
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        
+        // bind the previously generated texture
+        GLES20.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
+        // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0.
+        GLES20.glUniform1i(mTextureUniformHandle, 0);
+
+        
 
         // get handle to fragment shader's vColor member
         mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
@@ -307,6 +405,7 @@ class Triangle {
 
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(mPositionHandle);
+        GLES20.glDisableVertexAttribArray(mTextureCoordinateHandle);
     }
 }
 
@@ -316,31 +415,41 @@ class Square {
         // This matrix member variable provides a hook to manipulate
         // the coordinates of the objects that use this vertex shader
         "uniform mat4 uMVPMatrix;" +
-
+        "attribute vec2 a_TextureCoordinates;" +
         "attribute vec4 vPosition;" +
+        "varying vec2 v_TextureCoordinates;"+
         "void main() {" +
         // the matrix must be included as a modifier of gl_Position
+        "  v_TextureCoordinates = a_TextureCoordinates;" +
         "  gl_Position = uMVPMatrix * vPosition;" +
         "}";
 
     private final String fragmentShaderCode =
         "precision mediump float;" +
-        "uniform vec4 vColor;" +
+        "uniform sampler2D u_TextureUnit;"+
+        "varying vec2 v_TextureCoordinates;"+
         "void main() {" +
-        "  gl_FragColor = vColor;" +
+        "  gl_FragColor = texture2D(u_TextureUnit, v_TextureCoordinates);" +
         "}";
 
     private final FloatBuffer vertexBuffer;
     private final ShortBuffer drawListBuffer;
+    private FloatBuffer textureBuffer;  // buffer holding the texture coordinates
     private final int mProgram;
     private int mPositionHandle;
     private int mColorHandle;
+    private int[] textures = new int[1];
     private int mMVPMatrixHandle;
+    private int mTextureUniformHandle;
+    private int mTextureCoordinateHandle;
     public float dy =0;
 
     // number of coordinates per vertex in this array
     static final int COORDS_PER_VERTEX = 3;
+    static final int COORDS_PER_TEXTURE = 2;
+    float textureCoords[];
     float squareCoords[];
+    
 
     private final short drawOrder[] = { 0, 1, 2, 0, 2, 3 }; // order to draw vertices
 
@@ -354,6 +463,11 @@ class Square {
     			 				 cx-(0.5f*width), cy-(0.5f*height), 0.0f,   // bottom left
     			 				 cx+(0.5f*width), cy-(0.5f*height), 0.0f,   // bottom right
     			 				 cx+(0.5f*width), cy+(0.5f*height), 0.0f }; // top right
+    	 float textureCoords[] = { 0.0f, 0.0f,
+                 0.0f, 1.0f,
+                 1.0f, 1.0f,
+                 1.0f, 0.0f};
+    	 this.textureCoords = textureCoords;
     	 
     	 this.squareCoords = squareCoord;
         // initialize vertex byte buffer for shape coordinates
@@ -364,6 +478,13 @@ class Square {
         vertexBuffer = bb.asFloatBuffer();
         vertexBuffer.put(squareCoords);
         vertexBuffer.position(0);
+        
+        bb= ByteBuffer.allocateDirect(textureCoords.length * 4);
+        bb.order(ByteOrder.nativeOrder());
+        textureBuffer = bb.asFloatBuffer();
+        textureBuffer.put(textureCoords);
+        textureBuffer.position(0);
+
 
         // initialize byte buffer for the draw list
         ByteBuffer dlb = ByteBuffer.allocateDirect(
@@ -385,6 +506,32 @@ class Square {
         GLES20.glAttachShader(mProgram, fragmentShader); // add the fragment shader to program
         GLES20.glLinkProgram(mProgram);                  // create OpenGL program executables
     }
+    
+    public void loadGLTexture(GL10 gl, Context context) {
+    	final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;   // No pre-scaling
+    	// loading texture
+    	
+    	Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(),
+    			R.drawable.pencil02,options);
+    	
+    	// generate one texture pointer
+    	gl.glGenTextures(1, textures, 0);
+        // ...and bind it to our array
+        gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
+        // create nearest filtered texture
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
+    	gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
+    	
+    	
+    	 GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
+    
+    	 // Clean up
+    	
+    	 bitmap.recycle();
+    	
+    }
+
 
     public void draw(float[] mvpMatrix) {
         // Add program to OpenGL environment
@@ -400,13 +547,30 @@ class Square {
         GLES20.glVertexAttribPointer(mPositionHandle, COORDS_PER_VERTEX,
                                      GLES20.GL_FLOAT, false,
                                      vertexStride, vertexBuffer);
+        GLES20.glEnableVertexAttribArray(mTextureCoordinateHandle);
+        GLES20.glVertexAttribPointer(mTextureCoordinateHandle, COORDS_PER_TEXTURE,
+                                     GLES20.GL_FLOAT, false,
+                                     0, textureBuffer);
+        
 
         // get handle to fragment shader's vColor member
         mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
 
         // Set color for drawing the triangle
-        GLES20.glUniform4fv(mColorHandle, 1, color, 0);
+        //GLES20.glUniform4fv(mColorHandle, 1, color, 0);
+        
+        mTextureUniformHandle = GLES20.glGetUniformLocation(mProgram, "u_Texture");
+        mTextureCoordinateHandle = GLES20.glGetAttribLocation(mProgram, "a_TexCoordinate");
+     
+        
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        
+        // bind the previously generated texture
+        GLES20.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
+        // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0.
+        GLES20.glUniform1i(mTextureUniformHandle, 0);
 
+       
         // get handle to shape's transformation matrix
         mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
         glRenderer.checkGlError("glGetUniformLocation");
@@ -421,5 +585,6 @@ class Square {
 
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(mPositionHandle);
+        GLES20.glDisableVertexAttribArray(mTextureCoordinateHandle);
     }
 }
