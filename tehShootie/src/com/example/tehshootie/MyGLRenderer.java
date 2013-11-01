@@ -16,11 +16,6 @@
 
 package com.example.tehshootie;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
-
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -31,59 +26,121 @@ import android.util.Log;
 
 public class MyGLRenderer implements GLSurfaceView.Renderer {
 
-    private static final String TAG = "MyGLRenderer";
+	private static final String TAG = "MyGLRenderer";
     private Triangle mTriangle;
-    private Square   mSquare;
-
     private final float[] mMVPMatrix = new float[16];
+    private final float[] mScratch = new float[16];
     private final float[] mProjMatrix = new float[16];
     private final float[] mVMatrix = new float[16];
-    private final float[] mRotationMatrix = new float[16];
-    private final float[] mTranslationMatrix  = new float[16];
-
+    private final float[] mTranslationMatrix = new float[16];
+    
     // Declare as volatile because we are updating it from another thread
     public volatile float mAngle;
-    public volatile float dx = 0.0f, dy = 0.0f;
+    public volatile float dyShip = 0.0f;
+    public volatile float dxShip = 0.0f;
+    public float dy=0.0f;
+    long lastFrameTime = (long)0;
+    public float dx=0.0f;
+    public volatile boolean isShooting = false;
+    private final int MAX_BULLET = 20;
+    private Square[] bulletArray = new Square[MAX_BULLET];
+    
+    public int bulletCount = 0;
+    public int bulletOnScreen = 0;
+    boolean done = false;
+    long currentTime;
 
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
 
         // Set the background frame color
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+       currentTime = System.currentTimeMillis();
+       lastFrameTime = currentTime;
 
         mTriangle = new Triangle();
-        mSquare   = new Square();
+        //mSquare = new Square(0.0f,-0.75f,0.025f,0.05f);
+       
+        
     }
 
     @Override
     public void onDrawFrame(GL10 unused) {
-
-        // Draw background color
+            // Draw background color
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         // Set the camera position (View matrix)
-        Matrix.setLookAtM(mVMatrix, 0, 0, 0, -3, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+        
+        Matrix.setLookAtM(mVMatrix, 0, 0, 0, 3, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
 
         // Calculate the projection and view transformation
+   
         Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mVMatrix, 0);
+       
+        rendership();
+      
+       
+            update(); 
+            renderbullet();
+            
+    }
+    
+    public void update(){
+            currentTime =  System.currentTimeMillis();
+            float elapsed = (currentTime - lastFrameTime) * .001f;//convert ms to seconds
+            dy =  elapsed*7.0f;
+            lastFrameTime = currentTime; 
+            if(isShooting){
+                    if (bulletOnScreen <=MAX_BULLET) {
+                            if (bulletCount == MAX_BULLET) bulletCount = 0;
+                     bulletArray[bulletCount]   = new Square(mTriangle.getTopVertexX()+0.0f,mTriangle.getTopVertexY()+.025f,0.025f,0.05f);
+                     bulletCount++;
+                     if(bulletOnScreen<MAX_BULLET)
+                     bulletOnScreen++;
+                    }
+            
+            }//
+            
+    }
+    
+    public void renderbullet(){
+            if(bulletCount >1)
+        for( int i = 0; i<bulletOnScreen; i++){
+                bulletArray[i].dy+=dy;
+            
+            Matrix.setIdentityM(mTranslationMatrix, 0);
+            Matrix.translateM(mTranslationMatrix, 0, 0, bulletArray[i].dy, 0);
+            Matrix.multiplyMM(mScratch, 0,mMVPMatrix, 0, mTranslationMatrix , 0);
+            bulletArray[i].draw(mScratch);
+        }
+            
+            //mSquare.draw(mScratch);
+            
+            
 
-        // Draw square
-        mSquare.draw(mMVPMatrix);
+    }
+    
+    public void rendership(){
+        //Create a rotation for the triangle
+            //long time = SystemClock.uptimeMillis() % 4000L;
+            //float angle = 0.090f * ((int) time);
+            // Set the camera position (View matrix)
+        //Matrix.setLookAtM(mVMatrix, 0, 0, 0, -3, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
 
-        // Create a rotation for the triangle
-//        long time = SystemClock.uptimeMillis() % 4000L;
-//        float angle = 0.090f * ((int) time);
-        //Matrix.setRotateM(mRotationMatrix, 0, mAngle, 0, 0, -1.0f);
+        // Calculate the projection and view transformation
+       // Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mVMatrix, 0);
+      //Matrix.setRotateM(mRotationMatrix, 0, mAngle, 0, 0, -1.0f);
 
-        // Combine the rotation matrix with the projection and camera view
-       // Matrix.multiplyMM(mMVPMatrix, 0, mRotationMatrix, 0, mMVPMatrix, 0);
-        
-        Matrix.setIdentityM(mTranslationMatrix, 0);
-        Matrix.translateM(mTranslationMatrix, 0, dx, dy, 0);
-        Matrix.multiplyMM(mMVPMatrix, 0, mTranslationMatrix, 0, mMVPMatrix, 0);
+      // Combine the rotation matrix with the projection and camera view
+     // Matrix.multiplyMM(mMVPMatrix, 0, mRotationMatrix, 0, mMVPMatrix, 0);
 
-        // Draw triangle
-        mTriangle.draw(mMVPMatrix);
+      // Draw triangle
+            Matrix.setIdentityM(mTranslationMatrix, 0);
+            Matrix.translateM(mTranslationMatrix,0, dxShip, dyShip, 0);
+            Matrix.multiplyMM(mScratch, 0,mMVPMatrix  , 0,mTranslationMatrix, 0);
+            mTriangle.setTopVertexX(dxShip);
+            mTriangle.setTopVertexY(dyShip);
+            mTriangle.draw(mScratch);
     }
 
     @Override

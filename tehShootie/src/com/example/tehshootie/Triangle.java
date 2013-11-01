@@ -17,7 +17,7 @@ class Triangle {
         "attribute vec4 vPosition;" +
         "void main() {" +
         // the matrix must be included as a modifier of gl_Position
-        "  gl_Position = vPosition * uMVPMatrix;" +
+        "  gl_Position = uMVPMatrix * vPosition;" +
         "}";
 
     private final String fragmentShaderCode =
@@ -36,9 +36,9 @@ class Triangle {
     // number of coordinates per vertex in this array
     static final int COORDS_PER_VERTEX = 3;
     static float triangleCoords[] = { // in counterclockwise order:
-         0.0f,  0.622008459f, 0.0f,   // top
-        -0.5f, -0.311004243f, 0.0f,   // bottom left
-         0.5f, -0.311004243f, 0.0f    // bottom right
+         0.0f,  -0.8f, 0.0f,   // top
+        -0.1f, -0.9f, 0.0f,   // bottom left
+         0.1f, -0.9f, 0.0f    // bottom right
     };
     private final int vertexCount = triangleCoords.length / COORDS_PER_VERTEX;
     private final int vertexStride = COORDS_PER_VERTEX * 4; // 4 bytes per vertex
@@ -72,6 +72,27 @@ class Triangle {
         GLES20.glAttachShader(mProgram, fragmentShader); // add the fragment shader to program
         GLES20.glLinkProgram(mProgram);                  // create OpenGL program executables
 
+    }
+    
+    
+    public void setTopVertexX(float dx){
+            triangleCoords[0]= 0.0f+dx;
+            
+    }
+    
+    public void setTopVertexY(float dy){
+            triangleCoords[1]= -0.8f+dy;
+            
+    }
+    
+    public float getTopVertexY()
+    {
+            return triangleCoords[1];
+    }
+    
+    public float getTopVertexX()
+    {
+            return triangleCoords[0];
     }
 
     public void draw(float[] mvpMatrix) {
