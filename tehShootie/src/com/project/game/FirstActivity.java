@@ -20,6 +20,7 @@ public class FirstActivity extends Activity {
         // as the ContentView for this Activity
         mGLView = new MyGLSurfaceView(this);
         setContentView(mGLView);
+       
     }
 
     @Override
@@ -51,7 +52,7 @@ class MyGLSurfaceView extends GLSurfaceView {
       
         // Create an OpenGL ES 2.0 context.
         setEGLContextClientVersion(2);
-
+       
         // Set the Renderer for drawing on the GLSurfaceView
         mRenderer = new glRenderer(context);
         setRenderer(mRenderer);

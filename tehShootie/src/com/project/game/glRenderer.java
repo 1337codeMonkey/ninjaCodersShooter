@@ -47,7 +47,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     public float sdx = 0.0f;
     public float sdy = 0.0f;
     public volatile boolean isShooting = false;
-    private final int MAX_BULLET = 5;
+    private final int MAX_BULLET = 10;
     private final int MAX_ENEMY = 5;
     private Bullet[] bulletArray = new Bullet[MAX_BULLET];
     private EnemyShip[] enemyArray = new EnemyShip[MAX_BULLET];
@@ -121,7 +121,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	currentTime =  System.currentTimeMillis();
     	float elapsed = (currentTime - lastFrameTime) * .001f;//convert ms to seconds
     	dy =  elapsed*1.0f;
-    	//dAngle = elapsed*20.0f;
+    	dAngle = elapsed*20.0f;
     	totalTime += elapsed;
     	lastFrameTime = currentTime; 
     	if(totalTime > 0.5f){
@@ -142,6 +142,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	}
     	
     	if(genEnemy){
+    		
     		int neg1 = randomG.nextInt(2);
     		int neg2 = randomG.nextInt(2);
     		int x1 = randomG.nextInt(10);
@@ -181,12 +182,13 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	}
     	
     	
-        for( int i = 0; i<bulletCount; i++)
-        	 for( int j = 0; j<enemyCount; j++)
+        for( int i = 0; i<MAX_BULLET; i++)
+        	 for( int j = 0; j<MAX_ENEMY; j++)
         		 if ((bulletArray[i] != null)&&(enemyArray[j] != null)){
         			 boolean collide = checkCollision(bulletArray[i],enemyArray[j]);
         			 if(collide){
         				 enemyArray[j] = null;
+        				 bulletArray[i] = null;
         				 scoreB.loadGLTexture(gl, this.context);
         			 }
         		 }
@@ -200,7 +202,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     }
     public void renderbullet(GL10 gl){
     	
-        for( int i = 0; i<bulletCount; i++){
+        for( int i = 0; i<MAX_BULLET; i++){
         	if (bulletArray[i] != null){
         	bulletArray[i].dy+=dy;
             
@@ -220,17 +222,17 @@ public class glRenderer implements GLSurfaceView.Renderer {
     
     public void renderEnemyShip(GL10 gl){
 
-        for( int i = 0; i<enemyCount; i++){
+        for( int i = 0; i<MAX_ENEMY; i++){
         	if(enemyArray[i] != null){
         		enemyArray[i].dy+=dy*enemyArray[i].sdy;
         		enemyArray[i].dx+=dy*enemyArray[i].sdx;
         		enemyArray[i].dAngle+=this.dAngle;
         		Matrix.setIdentityM(mTranslationMatrix, 0);
-        		//Matrix.setIdentityM(mRotationMatrix, 0);
-        		//Matrix.setRotateM(mRotationMatrix, 0,enemyArray[i].dAngle, enemyArray[i].getCX(), enemyArray[i].getCY(), 0.0f);
+        		Matrix.setIdentityM(mRotationMatrix, 0);
+        		Matrix.setRotateM(mRotationMatrix, 0,enemyArray[i].dAngle, 0.0f, 0.0f,-1.0f);
         		Matrix.translateM(mTranslationMatrix, 0, enemyArray[i].dx, -1.0f*enemyArray[i].dy, 0);
-        		//Matrix.multiplyMM(mScratch, 0,mRotationMatrix, 0, mTranslationMatrix , 0);
-        		Matrix.multiplyMM(mScratch, 0,mMVPMatrix, 0,mTranslationMatrix , 0);
+        		Matrix.multiplyMM(mScratch, 0,mRotationMatrix, 0, mTranslationMatrix , 0);
+        		Matrix.multiplyMM(mScratch, 0,mMVPMatrix, 0,mScratch , 0);
         		//bulletArray[i].loadGLTexture(gl, this.context);
         		enemyArray[i].draw(mScratch);
         	}
