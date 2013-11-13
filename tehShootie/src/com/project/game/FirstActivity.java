@@ -70,31 +70,57 @@ class MyGLSurfaceView extends GLSurfaceView {
         // MotionEvent reports input details from the touch screen
         // and other input controls. In this case, you are only
         // interested in events where the touch position changed.
+    	if(!mRenderer.gameOver)
+    		gameMovement (e);
+    	if(mRenderer.gameOver)
+    		getRetry(e);
+    	return true;
+      
+    }
+    public boolean gameMovement(MotionEvent e){
+    	  float x = e.getX();
+          float y = e.getY();
+          float normalizedX = x/(float)this.getWidth()*2-1;
+          float normalizedY = -(y/(float)this.getHeight()*2-1);
+          switch (e.getAction()) {
+         
 
-        float x = e.getX();
+              case MotionEvent.ACTION_MOVE:
+              	
+                  
+
+                  float dx = normalizedX - mPreviousX;
+                  float dy = normalizedY - mPreviousY;
+
+                 
+                  mRenderer.dyShip = mRenderer.dyShip + dy;
+                  mRenderer.dxShip = mRenderer.dxShip + dx;
+               
+                  mRenderer.isShooting = true;
+              
+          }
+
+          mPreviousX = normalizedX;
+          mPreviousY = normalizedY;
+          return true;
+    }
+    public boolean getRetry(MotionEvent e){
+    	float x = e.getX();
         float y = e.getY();
-        float normalizedX = x/(float)this.getWidth()*2-1;
-        float normalizedY = -(y/(float)this.getHeight()*2-1);
+        float dx = 0.2f*(float)this.getWidth()*2-1;
+        float dy = 0.05f*(float)this.getHeight()*2-1;
+        float cx = 0.0f*(float)this.getWidth()*2-1;
+        float cy = 0.1f*(float)this.getHeight()*2-1;
         switch (e.getAction()) {
        
 
-            case MotionEvent.ACTION_MOVE:
+            case MotionEvent.ACTION_UP:
+            	if(x<=(cx+dx) && x >=(cx-dx) && y<=(cy+dy) && y>=(cy-dy))
+            		mRenderer.restart = true;
             	
-                
-
-                float dx = normalizedX - mPreviousX;
-                float dy = normalizedY - mPreviousY;
-
-          
-                mRenderer.dyShip = (mRenderer.dyShip + dy);
-                mRenderer.dxShip = mRenderer.dxShip + dx;
-                mRenderer.isShooting = true;
             
         }
-
-        mPreviousX = normalizedX;
-        mPreviousY = normalizedY;
-        return true;
+    	return true;
     }
 }
 

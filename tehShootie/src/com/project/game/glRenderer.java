@@ -22,9 +22,10 @@ import android.util.Log;
 public class glRenderer implements GLSurfaceView.Renderer {
 
     private static final String TAG = "MyGLRenderer";
-    private Ship playerShip;
+    public volatile Ship playerShip;
     private Square   mSquare;
     private Square background;
+    private GameOver gameOverScreen;
     private ScoreBoard scoreB;
 
     private final float[] mMVPMatrix = new float[16];
@@ -39,11 +40,14 @@ public class glRenderer implements GLSurfaceView.Renderer {
     public volatile float mAngle;
     public volatile float dyShip = 0.0f;
     public volatile float dxShip = 0.0f;
+
     public float dy=0.0f;
     long lastFrameTime = (long)0;
     public float dx=0.0f;
     public float dAngle = 0.0f;
     public float totalTime = 0.0f;
+    public float invciTime = 3.0f;
+    public boolean invincible = false;
     public float sdx = 0.0f;
     public float sdy = 0.0f;
     public volatile boolean isShooting = false;
@@ -61,6 +65,9 @@ public class glRenderer implements GLSurfaceView.Renderer {
     private Context context;
     boolean genBullet = false;
     boolean genEnemy = false;
+    boolean playerHit = false;
+    boolean gameOver = false;
+    boolean restart = false;
     Random randomG = new Random();
 
     
@@ -84,11 +91,13 @@ public class glRenderer implements GLSurfaceView.Renderer {
         //mTriangle.loadGLTexture(unused, this.context);
        	playerShip = new Ship(0.0f,-0.8f,0.25f,0.25f);
        	playerShip.loadGLTexture(unused, this.context, R.drawable.airplane);
-        //background = new Square(0.0f,0.0f,1.0f,1.0f);
-        //background.loadGLTexture(unused, this.context);
+        background = new Square(0.0f,0.0f,2.0f,2.0f);
+        background.loadGLTexture(unused, this.context,R.drawable.check);
         //mSquare = new Square(0.0f,-0.75f,0.025f,0.05f);
         scoreB = new ScoreBoard();
-       
+        gameOverScreen = new GameOver();
+        gameOverScreen.loadGLTexture(unused, this.context, R.drawable.gameover, R.drawable.retry);
+        
         
     };
 
@@ -96,6 +105,8 @@ public class glRenderer implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 unused) {
     	// Draw background color
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+        GLES20.glEnable(GL10.GL_BLEND);
 
         // Set the camera position (View matrix)
         
@@ -106,15 +117,61 @@ public class glRenderer implements GLSurfaceView.Renderer {
         Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mVMatrix, 0);
         //background.draw(mMVPMatrix);
         
-       
-        rendership();
-      
-       
+        if(restart){
+        	 reset(unused);
+        	 restart = false;
+        	 gameOver = false;
+              
+        	
+        }
+        
+        if(!gameOver){
     	update(unused); 
+    	background.draw(mMVPMatrix);
+    	rendership();
     	renderbullet(unused);
     	renderEnemyShip(unused);
     	renderScoreBoard();
+    	}
+        if(gameOver){
+        	background.draw(mMVPMatrix);
+        	renderScoreBoard();
+        	renderGameOver();
+        }
     	
+    }
+    public void reset(GL10 gl){
+    	 dy=0.0f;
+    	 dx=0.0f;
+    	 dAngle = 0.0f;
+    	 totalTime = 0.0f;
+    	 invciTime = 3.0f;
+    	 invincible = false;
+    	 sdx = 0.0f;
+    	 sdy = 0.0f;
+    	 bulletArray = new Bullet[MAX_BULLET];
+    	 enemyArray = new EnemyShip[MAX_BULLET];
+    	 bulletCount = 0;
+    	 bulletOnScreen = 0;
+    	 enemyCount = 0;
+    	 enemyOnScreen = 0;
+    	 done = false;
+    	 genBullet = false;
+    	 genEnemy = false;
+    	 GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+         currentTime = System.currentTimeMillis();
+         lastFrameTime = currentTime;
+
+          //mTriangle = new Triangle();
+          //mTriangle.loadGLTexture(unused, this.context);
+         	playerShip = new Ship(0.0f,-0.8f,0.25f,0.25f);
+         	playerShip.loadGLTexture(gl, this.context, R.drawable.airplane);
+          background = new Square(0.0f,0.0f,2.0f,2.0f);
+          background.loadGLTexture(gl, this.context,R.drawable.check);
+          //mSquare = new Square(0.0f,-0.75f,0.025f,0.05f);
+          scoreB = new ScoreBoard();
+          gameOverScreen = new GameOver();
+          gameOverScreen.loadGLTexture(gl, this.context, R.drawable.gameover, R.drawable.retry);
     }
     
     public void update(GL10 gl){
@@ -124,6 +181,15 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	dAngle = elapsed*20.0f;
     	totalTime += elapsed;
     	lastFrameTime = currentTime; 
+    	if (invincible)
+    	{
+    		invciTime-=elapsed;
+    	}
+    	if(invciTime <= 0)
+    	{
+    		invciTime = 3.0f;
+    		invincible = false;
+    	}
     	if(totalTime > 0.5f){
     		genBullet = true;
     		genEnemy = true;
@@ -183,7 +249,16 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	
     	
         for( int i = 0; i<MAX_BULLET; i++)
-        	 for( int j = 0; j<MAX_ENEMY; j++)
+        	 for( int j = 0; j<MAX_ENEMY; j++){
+        		 if ((enemyArray[j] != null)&&!invincible&& i == 0){
+        			 boolean collideShip = checkCollisionShip(enemyArray[j]);
+            	 	 if(collideShip){
+            	 		 playerShip.life--;
+            			
+            			 invincible = true;
+            	     }
+            		 
+        		 }
         		 if ((bulletArray[i] != null)&&(enemyArray[j] != null)){
         			 boolean collide = checkCollision(bulletArray[i],enemyArray[j]);
         			 if(collide){
@@ -192,10 +267,21 @@ public class glRenderer implements GLSurfaceView.Renderer {
         				 scoreB.loadGLTexture(gl, this.context);
         			 }
         		 }
+        		 
+        	}
+        if(playerShip.life == 0){
+        	gameOver = true;
+        }
     }
     
     public boolean checkCollision(Bullet b, EnemyShip e){
     	if(b.getLeftBound()<= e.getRightBound() && b.getRightBound()>=e.getLeftBound()&& b.getNorthBound()>= e.getSouthBound()&& b.getSouthBound()<= e.getNorthBound())
+    		return true;
+    	else return false;
+    		
+    }
+    public boolean checkCollisionShip( EnemyShip e){
+    	if(playerShip.getLeftBound()<= e.getRightBound() && playerShip.getRightBound()>=e.getLeftBound()&& playerShip.getNorthBound()>= e.getSouthBound()&& playerShip.getSouthBound()<= e.getNorthBound())
     		return true;
     	else return false;
     		
@@ -259,15 +345,37 @@ public class glRenderer implements GLSurfaceView.Renderer {
      // Matrix.multiplyMM(mMVPMatrix, 0, mRotationMatrix, 0, mMVPMatrix, 0);
 
       // Draw triangle
+    	playerShip.setX(dxShip);
+    	playerShip.setY(dyShip);
+    	if(playerShip.getSouthBound()<=-0.925f){
+    		dyShip = 0.0f;
+    		playerShip.setY(dyShip);
+    	}
+    	if(playerShip.getNorthBound()>=1.0f){
+    		dyShip = 1.675f;
+    		playerShip.setY(dyShip);
+    	}
+    	if(playerShip.getLeftBound()<=-0.7f){
+    		dxShip = -.575f;
+    		playerShip.setY(dyShip);
+    	}
+    	if(playerShip.getRightBound()>=0.7f){
+    		dxShip = 0.575f;
+    		playerShip.setY(dyShip);
+    	}
     	Matrix.setIdentityM(mTranslationMatrix, 0);
     	Matrix.translateM(mTranslationMatrix,0, dxShip, dyShip, 0);
     	Matrix.multiplyMM(mScratch, 0,mMVPMatrix  , 0,mTranslationMatrix, 0);
-    	playerShip.setX(dxShip);
-    	playerShip.setY(dyShip);
-    	playerShip.draw(mScratch);
+    	
+    	playerShip.draw(mScratch,mMVPMatrix);
+    
     }
     public void renderScoreBoard(){
     	scoreB.draw(mMVPMatrix);
+    }
+    
+    public void renderGameOver(){
+    	gameOverScreen.draw(mMVPMatrix);
     }
 
     @Override
