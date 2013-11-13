@@ -1,6 +1,7 @@
 package com.project.game;
 
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
@@ -12,6 +13,7 @@ public class FirstActivity extends Activity {
 
     private GLSurfaceView mGLView;
 
+    @SuppressLint("NewApi")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

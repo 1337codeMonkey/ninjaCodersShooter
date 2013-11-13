@@ -4,6 +4,8 @@ import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
 
+import com.example.tehshootie.R;
+
 public class ScoreBoard {
 	public Square mSquare1;
 	public Square mSquare2;

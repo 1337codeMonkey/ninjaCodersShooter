@@ -12,6 +12,8 @@ import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
+import com.example.tehshootie.R;
+
 class Triangle {
 
     private final String vertexShaderCode =
