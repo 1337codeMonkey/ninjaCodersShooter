@@ -172,6 +172,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	 GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
          currentTime = System.currentTimeMillis();
          lastFrameTime = currentTime;
+         score = 0;
 
           //mTriangle = new Triangle();
           //mTriangle.loadGLTexture(unused, this.context);

@@ -130,7 +130,7 @@ class MyGLSurfaceView extends GLSurfaceView {
             	if(normalizedX<=(0.0f+dx) && normalizedX >=(0.0f-dx) && normalizedY<=(-0.1f+dy) && normalizedY>=(-0.1f-dy))
             		mRenderer.restart = true;
             	if(normalizedX<=(0.0f+dx) && normalizedX >=(0.0f-dx) && normalizedY<=(-0.2f+dy) && normalizedY>=(-0.2f-dy))
-            		SwarmLeaderboard.submitScore(12540, mRenderer.score);
+            		//SwarmLeaderboard.submitScore(12540, mRenderer.score);
             	mRenderer.retryHold = false;
             	mRenderer.swarmHold = false;
             	
