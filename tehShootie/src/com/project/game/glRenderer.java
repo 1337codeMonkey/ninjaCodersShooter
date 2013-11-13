@@ -68,6 +68,9 @@ public class glRenderer implements GLSurfaceView.Renderer {
     boolean playerHit = false;
     boolean gameOver = false;
     boolean restart = false;
+    boolean retryHold = false;
+    boolean swarmHold = false;
+    public int score = 0;
     Random randomG = new Random();
 
     
@@ -96,7 +99,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
         //mSquare = new Square(0.0f,-0.75f,0.025f,0.05f);
         scoreB = new ScoreBoard();
         gameOverScreen = new GameOver();
-        gameOverScreen.loadGLTexture(unused, this.context, R.drawable.gameover, R.drawable.retry);
+        gameOverScreen.loadGLTexture(unused, this.context, R.drawable.gameover, R.drawable.retry,R.drawable.swarm1);
         
         
     };
@@ -134,6 +137,14 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	renderScoreBoard();
     	}
         if(gameOver){
+        	if(retryHold){
+        		 gameOverScreen.loadGLTexture(unused, this.context, R.drawable.gameover, R.drawable.retry2,R.drawable.swarm1);
+        	}
+        	else if(swarmHold)
+        		gameOverScreen.loadGLTexture(unused, this.context, R.drawable.gameover, R.drawable.retry1,R.drawable.swarm2);
+        	else
+        		 gameOverScreen.loadGLTexture(unused, this.context, R.drawable.gameover, R.drawable.retry1,R.drawable.swarm1);
+        	
         	background.draw(mMVPMatrix);
         	renderScoreBoard();
         	renderGameOver();
@@ -164,14 +175,14 @@ public class glRenderer implements GLSurfaceView.Renderer {
 
           //mTriangle = new Triangle();
           //mTriangle.loadGLTexture(unused, this.context);
-         	playerShip = new Ship(0.0f,-0.8f,0.25f,0.25f);
-         	playerShip.loadGLTexture(gl, this.context, R.drawable.airplane);
-          background = new Square(0.0f,0.0f,2.0f,2.0f);
-          background.loadGLTexture(gl, this.context,R.drawable.check);
+         playerShip = new Ship(0.0f,-0.8f,0.25f,0.25f);
+         playerShip.loadGLTexture(gl, this.context, R.drawable.airplane);
+         background = new Square(0.0f,0.0f,2.0f,2.0f);
+         background.loadGLTexture(gl, this.context,R.drawable.check);
           //mSquare = new Square(0.0f,-0.75f,0.025f,0.05f);
-          scoreB = new ScoreBoard();
-          gameOverScreen = new GameOver();
-          gameOverScreen.loadGLTexture(gl, this.context, R.drawable.gameover, R.drawable.retry);
+         scoreB = new ScoreBoard();
+         gameOverScreen = new GameOver();
+         gameOverScreen.loadGLTexture(gl, this.context, R.drawable.gameover, R.drawable.retry,R.drawable.swarm1);
     }
     
     public void update(GL10 gl){
@@ -265,6 +276,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
         				 enemyArray[j] = null;
         				 bulletArray[i] = null;
         				 scoreB.loadGLTexture(gl, this.context);
+        				 score++;
         			 }
         		 }
         		 

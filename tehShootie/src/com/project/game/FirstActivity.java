@@ -73,7 +73,7 @@ class MyGLSurfaceView extends GLSurfaceView {
     	if(!mRenderer.gameOver)
     		gameMovement (e);
     	if(mRenderer.gameOver)
-    		getRetry(e);
+    		getGameOverControl(e);
     	return true;
       
     }
@@ -104,19 +104,36 @@ class MyGLSurfaceView extends GLSurfaceView {
           mPreviousY = normalizedY;
           return true;
     }
-    public boolean getRetry(MotionEvent e){
+    public boolean getGameOverControl(MotionEvent e){
     	float x = e.getX();
         float y = e.getY();
-        float dx = 0.2f*(float)this.getWidth()*2-1;
-        float dy = 0.05f*(float)this.getHeight()*2-1;
-        float cx = 0.0f*(float)this.getWidth()*2-1;
-        float cy = 0.1f*(float)this.getHeight()*2-1;
+        float normalizedX = x/(float)this.getWidth()*2-1;
+        float normalizedY = -(y/(float)this.getHeight()*2-1);
+        float dx = 0.2f;
+        float dy = 0.05f;
+       
         switch (e.getAction()) {
        
-
+        	
+        	case MotionEvent.ACTION_MOVE:
+        		if(normalizedX<=(0.0f+dx) && normalizedX >=(0.0f-dx) && normalizedY<=(-0.1f+dy) && normalizedY>=(-0.1f-dy)){
+        			mRenderer.retryHold = true;
+        			mRenderer.swarmHold = false;
+        		}
+        			
+        		if(normalizedX<=(0.0f+dx) && normalizedX >=(0.0f-dx) && normalizedY<=(-0.2f+dy) && normalizedY>=(-0.2f-dy)){
+        			mRenderer.retryHold = false;
+        			mRenderer.swarmHold = true;
+        		}
+        		return true;
             case MotionEvent.ACTION_UP:
-            	if(x<=(cx+dx) && x >=(cx-dx) && y<=(cy+dy) && y>=(cy-dy))
+            	if(normalizedX<=(0.0f+dx) && normalizedX >=(0.0f-dx) && normalizedY<=(-0.1f+dy) && normalizedY>=(-0.1f-dy))
             		mRenderer.restart = true;
+            	if(normalizedX<=(0.0f+dx) && normalizedX >=(0.0f-dx) && normalizedY<=(-0.2f+dy) && normalizedY>=(-0.2f-dy))
+            		SwarmLeaderboard.submitScore(12540, mRenderer.score);
+            	mRenderer.retryHold = false;
+            	mRenderer.swarmHold = false;
+            	
             	
             
         }
