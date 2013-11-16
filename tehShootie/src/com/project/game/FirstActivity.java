@@ -1,6 +1,8 @@
 package com.project.game;
 
 
+import com.swarmconnect.*;
+
 import android.app.Activity;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
@@ -8,7 +10,7 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 
-public class FirstActivity extends Activity {
+public class FirstActivity extends SwarmActivity {
 
     private GLSurfaceView mGLView;
 
@@ -130,7 +132,7 @@ class MyGLSurfaceView extends GLSurfaceView {
             	if(normalizedX<=(0.0f+dx) && normalizedX >=(0.0f-dx) && normalizedY<=(-0.1f+dy) && normalizedY>=(-0.1f-dy))
             		mRenderer.restart = true;
             	if(normalizedX<=(0.0f+dx) && normalizedX >=(0.0f-dx) && normalizedY<=(-0.2f+dy) && normalizedY>=(-0.2f-dy))
-            		//SwarmLeaderboard.submitScore(12540, mRenderer.score);
+            		SwarmLeaderboard.submitScore(12540, mRenderer.score);
             	mRenderer.retryHold = false;
             	mRenderer.swarmHold = false;
             	

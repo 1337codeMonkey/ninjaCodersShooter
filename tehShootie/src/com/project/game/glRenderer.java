@@ -1,21 +1,13 @@
 package com.project.game;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
 import java.util.Random;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Point;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.util.Log;
 
@@ -72,7 +64,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     boolean swarmHold = false;
     public int score = 0;
     Random randomG = new Random();
-
+    boolean gamestart = true;
     
     public glRenderer(Context context) {
     
@@ -86,26 +78,31 @@ public class glRenderer implements GLSurfaceView.Renderer {
 
         // Set the background frame color
     	
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        //GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
        currentTime = System.currentTimeMillis();
        lastFrameTime = currentTime;
 
         //mTriangle = new Triangle();
         //mTriangle.loadGLTexture(unused, this.context);
-       	playerShip = new Ship(0.0f,-0.8f,0.25f,0.25f);
-       	playerShip.loadGLTexture(unused, this.context, R.drawable.airplane);
-        background = new Square(0.0f,0.0f,2.0f,2.0f);
-        background.loadGLTexture(unused, this.context,R.drawable.check);
-        //mSquare = new Square(0.0f,-0.75f,0.025f,0.05f);
-        scoreB = new ScoreBoard();
-        gameOverScreen = new GameOver();
-        gameOverScreen.loadGLTexture(unused, this.context, R.drawable.gameover, R.drawable.retry,R.drawable.swarm1);
+       
         
         
     };
 
     @Override
     public void onDrawFrame(GL10 unused) {
+    	if(gamestart)
+    	{
+    		playerShip = new Ship(0.0f,-0.8f,0.25f,0.25f);
+           	playerShip.loadGLTexture(unused, this.context, R.drawable.airplane);
+            background = new Square(0.0f,0.0f,2.0f,2.0f);
+            background.loadGLTexture(unused, this.context,R.drawable.check);
+            //mSquare = new Square(0.0f,-0.75f,0.025f,0.05f);
+            scoreB = new ScoreBoard();
+            gameOverScreen = new GameOver();
+            gameOverScreen.loadGLTexture(unused, this.context, R.drawable.gameover, R.drawable.retry,R.drawable.swarm1);
+            gamestart = false;
+    	}
     	// Draw background color
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
@@ -151,7 +148,12 @@ public class glRenderer implements GLSurfaceView.Renderer {
         }
     	
     }
+    
+    public void loadObjects(GL10 unused){
+    	
+    }
     public void reset(GL10 gl){
+    	gamestart = true;
     	 dy=0.0f;
     	 dx=0.0f;
     	 dAngle = 0.0f;
