@@ -31,6 +31,14 @@
             android:name="android.support.PARENT_ACTIVITY"
             android:value="com.project.game.MenuActivity" />
     </activity>
+    <activity
+        android:name="com.project.game.AccelerometerTest"
+        android:screenOrientation="portrait"
+        android:parentActivityName="com.project.game.MenuActivity" >
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.project.game.MenuActivity" />
+    </activity>
     </application>
 
 </manifest>

@@ -42,4 +42,12 @@
         android:onClick="login"
          />
 
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:text="Accelerometer Test v0.2" 
+        android:onClick="accel"/>
+
 </LinearLayout>

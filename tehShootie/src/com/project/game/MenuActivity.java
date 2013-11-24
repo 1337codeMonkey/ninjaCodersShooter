@@ -52,4 +52,11 @@ public class MenuActivity extends SwarmActivity {
         	else
                 Swarm.showDashboard();
         }
+        
+        /** Called by Accelerometer button, lol*/
+        public void accel(View view){
+        	Intent intent = new Intent(this, AccelerometerTest.class);
+            startActivity(intent);
+        }
+         
 }
