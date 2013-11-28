@@ -69,5 +69,6 @@ public class ScoreBoard {
 		 mSquare3.draw(mvpMatrix);
 		 mSquare4.draw(mvpMatrix);
 	 }
+	 
 
 }

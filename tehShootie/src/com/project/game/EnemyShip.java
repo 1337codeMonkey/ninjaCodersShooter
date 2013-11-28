@@ -3,6 +3,7 @@ package com.project.game;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 
 public class EnemyShip {
 	public float centerX;
@@ -29,8 +30,8 @@ public class EnemyShip {
 		this.height = height;
 				
 	}
-	 public void loadGLTexture(GL10 gl, Context context, int resouceID){
-		 mSquare.loadGLTexture(gl, context, resouceID);
+	 public void loadGLTexture(GL10 gl, Bitmap bitmap){
+		 mSquare.loadGLTexture(gl, bitmap);
 	 }
 	 public void draw(float[] mvpMatrix) {
 		 mSquare.draw(mvpMatrix);
@@ -54,9 +55,16 @@ public class EnemyShip {
 		 return centerX+(dx)+(0.5f*width);
 	 }
 	 public float getNorthBound(){
-		 return centerY+(-dy)+(0.5f*height);
+		 return centerY+(dy)+(0.5f*height);
 	 }
 	 public float getSouthBound(){
-		 return centerY+(-dy)-(0.5f*height);
+		 return centerY+(dy)-(0.5f*height);
+	 }
+	 public float getHeight(){
+		 return this.height;
+	 }
+	 public float getWidth(){
+		 return this.width;
+		 
 	 }
 }

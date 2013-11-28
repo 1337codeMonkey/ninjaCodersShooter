@@ -3,6 +3,7 @@ package com.project.game;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 
 public class GameOver {
 	
@@ -17,12 +18,12 @@ public class GameOver {
 		mSquare3 = new Square(0.0f,-0.2f,0.4f,0.1f);
 		
 	}
-	public void loadGLTexture(GL10 gl, Context context, int resourceID1, int resourceID2, int resourceID3){
+	public void loadGLTexture(GL10 gl, Bitmap bitmap1, Bitmap bitmap2, Bitmap bitmap3){
 		
 		 
-		 mSquare1.loadGLTexture(gl, context, resourceID1);
-		 mSquare2.loadGLTexture(gl, context, resourceID2);
-		 mSquare3.loadGLTexture(gl, context, resourceID3);
+		 mSquare1.loadGLTexture(gl, bitmap1);
+		 mSquare2.loadGLTexture(gl, bitmap2);
+		 mSquare3.loadGLTexture(gl, bitmap3);
 
 	 }
 	 

@@ -5,12 +5,16 @@ import com.swarmconnect.*;
 
 import android.app.Activity;
 import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 
-public class FirstActivity extends SwarmActivity {
+public class FirstActivity extends SwarmActivity  {
 
     private GLSurfaceView mGLView;
 
@@ -20,9 +24,11 @@ public class FirstActivity extends SwarmActivity {
 
         // Create a GLSurfaceView instance and set it
         // as the ContentView for this Activity
-        mGLView = new MyGLSurfaceView(this);
+        mGLView = new MyGLSurfaceView(this,getSystemService(Context.SENSOR_SERVICE) );
         setContentView(mGLView);
-       
+        
+        
+        
     }
 
     @Override
@@ -45,12 +51,17 @@ public class FirstActivity extends SwarmActivity {
     }
 }
 
-class MyGLSurfaceView extends GLSurfaceView {
+class MyGLSurfaceView extends GLSurfaceView implements SensorEventListener {
 
     private final glRenderer mRenderer;
+    float[] linearAcceleration = {0.0f, 0.0f};//, 0.0f};
 
-    public MyGLSurfaceView(Context context) {
+    public MyGLSurfaceView(Context context,Object o) {
         super(context);
+        SensorManager manager = (SensorManager) o; 
+        Sensor accelerometer = manager.getSensorList( Sensor.TYPE_ACCELEROMETER).get(0);
+        manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
+        
       
         // Create an OpenGL ES 2.0 context.
         setEGLContextClientVersion(2);
@@ -78,6 +89,59 @@ class MyGLSurfaceView extends GLSurfaceView {
     		getGameOverControl(e);
     	return true;
       
+    }
+    @Override
+    public void onSensorChanged(SensorEvent event) { 
+            float[] input = {event.values[0], event.values[1]};//,event.values[2]};                
+            float[] gravity = {0.0f, 0.0f};//, 0.0f};
+
+            float timeConstant = 0.18f;
+            float alpha = 0.1f;
+            float dt = 0;
+             
+            // Timestamps for the low-pass filters
+            float timestamp = System.nanoTime();
+            float timestampOld = System.nanoTime();
+                     
+        // Find the sample period (between updates).
+        // Convert from nanoseconds to seconds
+        dt = (timestamp - timestampOld) / 1000000000.0f;
+     
+        timestampOld = timestamp;
+     
+        alpha = timeConstant / (timeConstant + dt);
+     
+        gravity[0] = alpha * gravity[0] + (1 - alpha) * input[0];
+        gravity[1] = alpha * gravity[1] + (1 - alpha) * input[1];
+       // gravity[2] = alpha * gravity[2] + (1 - alpha) * input[2];
+     
+        //@Ky, I'm adding 1.0f under the intention of multiplying the 
+        //ships coords by this value. If you want to add to the ship's 
+        //coords, just remove this loop.
+        //
+        //change to i < 3 for z-axis support
+        /*for(int i = 0; i < 2; i++){
+                linearAcceleration[i] = input[i] - gravity[i];
+                if(Math.abs(linearAcceleration[i]) < 1.0f)
+                        linearAcceleration[i] = 1.0f;
+        }*/
+        mRenderer.dxShip += (-0.02f*(input[0]));
+        mRenderer.dyShip += (-0.02f*(input[1]));
+            
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            // TODO Auto-generated method stub
+            
+    }
+
+    public float getX(){
+            return linearAcceleration[0];
+    }
+    
+    public float getY(){
+            return linearAcceleration[1];
     }
     public boolean gameMovement(MotionEvent e){
     	  float x = e.getX();

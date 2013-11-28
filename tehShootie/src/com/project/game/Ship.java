@@ -3,6 +3,7 @@ package com.project.game;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 
 public class Ship {
 	public float centerX;
@@ -26,9 +27,9 @@ public class Ship {
 		lifeC = new lifeCounter();
 				
 	}
-	 public void loadGLTexture(GL10 gl, Context context, int resourceID){
-		 mSquare.loadGLTexture(gl, context, resourceID);
-		 lifeC.loadGLTexture(gl, context, resourceID);
+	 public void loadGLTexture(GL10 gl, Bitmap bitmap){
+		 mSquare.loadGLTexture(gl, bitmap);
+		 lifeC.loadGLTexture(gl, bitmap);
 	 }
 	 public void draw(float[] mvpMatrix1, float[] mvpMatrix2) {
 		 mSquare.draw(mvpMatrix1);

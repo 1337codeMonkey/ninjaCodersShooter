@@ -12,8 +12,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
+import android.opengl.Matrix;
 
-class Square {
+class TwoSquare {
 
     private final String vertexShaderCode =
         // This matrix member variable provides a hook to manipulate
@@ -46,6 +47,7 @@ class Square {
     private int mMVPMatrixHandle;
     private int mTextureUniformHandle;
     private int mTextureCoordinateHandle;
+    float[] mTranslationMatrix = new float[16];
     public float dy =0;
 
     // number of coordinates per vertex in this array
@@ -63,15 +65,12 @@ class Square {
     // Set color with red, green, blue and alpha (opacity) values
     float color[] = { 0.2f, 0.709803922f, 0.898039216f, 1.0f };
 
-    public Square(float cx,float cy, float width, float height) {
+    public TwoSquare(float cx,float cy, float width, float height, float[] textureCoords) {
     	 float squareCoord[] = { cx-(0.5f*width), cy+(0.5f*height), 0.0f,   // top left
     			 				 cx-(0.5f*width), cy-(0.5f*height), 0.0f,   // bottom left
     			 				 cx+(0.5f*width), cy-(0.5f*height), 0.0f,   // bottom right
     			 				 cx+(0.5f*width), cy+(0.5f*height), 0.0f }; // top right
-    	 float textureCoords[] = { 0.0f, 0.0f,
-                 0.0f, 1.0f,
-                 1.0f, 1.0f,
-                 1.0f, 0.0f};
+    	
     	 this.textureCoords = textureCoords;
     	 
     	 this.squareCoords = squareCoord;
@@ -112,32 +111,7 @@ class Square {
         GLES20.glLinkProgram(mProgram);                  // create OpenGL program executables
     }
     
-    public void loadGLTexture(GL10 gl, Context context, int resouceID) {
-    	final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inScaled = false;   // No pre-scaling
-    	// loading texture
-    	
-    	Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(),
-    			resouceID,options);
-    	
-    	// generate one texture pointer
-    	gl.glGenTextures(1, textures, 0);
-        // ...and bind it to our array
-        gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
-        // create nearest filtered texture
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
-    	gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
-    	
-    	
-    	 GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
-    
-    	 // Clean up
-    	
-    	 bitmap.recycle();
-    	
-    }
-    
-    public void loadGLTexture(GL10 gl,Bitmap bitmap) {
+    public void loadGLTexture(GL10 gl, Bitmap bitmap) {
     	
     	
     	// generate one texture pointer
@@ -158,7 +132,13 @@ class Square {
     }
 
 
-    public void draw(float[] mvpMatrix) {
+    public void draw(float[] mvpMatrix,float dx) {
+ 
+    	
+    	Matrix.setIdentityM(mTranslationMatrix, 0);
+		Matrix.translateM(mTranslationMatrix, 0, dx, 0, 0);
+		Matrix.multiplyMM(mvpMatrix, 0,mvpMatrix, 0,mTranslationMatrix , 0);
+		
         // Add program to OpenGL environment
         GLES20.glUseProgram(mProgram);
 

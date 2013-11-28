@@ -1,4 +1,4 @@
-package com.project.game;
+/*package com.project.game;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -13,57 +13,59 @@ import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
-class Square {
+public class ParticleSystem {
 
     private final String vertexShaderCode =
         // This matrix member variable provides a hook to manipulate
         // the coordinates of the objects that use this vertex shader
         "uniform mat4 uMVPMatrix;" +
+        "uniform float u_Time" +
         "attribute vec2 a_TextureCoordinates;" +
         "attribute vec4 vPosition;" +
         "varying vec2 v_TextureCoordinates;"+
+        "attribute vec3 a_DirectionVector" +
+        "attribute float a_ParticleStartTime" +
+        "varying float v_ElapsedTime;" +
         "void main() {" +
         // the matrix must be included as a modifier of gl_Position
         "  v_TextureCoordinates = a_TextureCoordinates;" +
-        "  gl_Position = uMVPMatrix * vPosition;" +
+
+        "  v_ElapsedTime = u_Time - a_ParticleStartTime;" +
+        "  gl_PointSize = 10.0;" +
+        "  vec3 currentPosition = a_Position +(a_DirectionVector*v_ElapsedTime);" +
+        "  gl_Position = uMVPMatrix * vec4(currentPosition,1.0);" +
         "}";
 
     private final String fragmentShaderCode =
         "precision mediump float;" +
         "uniform sampler2D u_TextureUnit;"+
         "varying vec2 v_TextureCoordinates;"+
+        "varying float v_ElapsedTime;" +
         "void main() {" +
         "  gl_FragColor = texture2D(u_TextureUnit, v_TextureCoordinates);" +
         "}";
 
-    private final FloatBuffer vertexBuffer;
-    private final ShortBuffer drawListBuffer;
-    private FloatBuffer textureBuffer;  // buffer holding the texture coordinates
-    private final int mProgram;
-    private int mPositionHandle;
-    private int mColorHandle;
-    private int[] textures = new int[1];
-    private int mMVPMatrixHandle;
-    private int mTextureUniformHandle;
-    private int mTextureCoordinateHandle;
-    public float dy =0;
-
-    // number of coordinates per vertex in this array
-    static final int COORDS_PER_VERTEX = 3;
-    static final int COORDS_PER_TEXTURE = 2;
-    float textureCoords[];
-    float squareCoords[];
-    
-
-    private final short drawOrder[] = { 0, 1, 2, 0, 2, 3 }; // order to draw vertices
-
-    private final int vertexStride = COORDS_PER_VERTEX * 4; // 4 bytes per vertex
-    private final int textureStride = COORDS_PER_TEXTURE * 4;
-
-    // Set color with red, green, blue and alpha (opacity) values
-    float color[] = { 0.2f, 0.709803922f, 0.898039216f, 1.0f };
-
-    public Square(float cx,float cy, float width, float height) {
+    private static final int POSITION_COMPONENT_COUNT = 3;
+    private static final int COLOR_COMPONENT_COUNT = 3;
+    private static final int VECTOR_COMPONENT_COUNT = 3;
+    private static final int PARTICLE_START_TIME_COMPONENT_COUNT = 3;
+    private static final int TOTAL_COMPONENT_COUNT =
+    		POSITION_COMPONENT_COUNT
+    		+ COLOR_COMPONENT_COUNT
+    		+ VECTOR_COMPONENT_COUNT
+    		+ PARTICLE_START_TIME_COMPONENT_COUNT;
+    private static final int STRIDE = TOTAL_COMPONENT_COUNT * 4;
+    private final float[] particles;
+   // private final VertexArray vertexArray;
+    private final int maxParticleCount;
+    private int currentParticleCount;
+    private int nextParticle;
+    public ParticleSystem(int maxParticleCount) {
+    particles = new float[maxParticleCount * TOTAL_COMPONENT_COUNT];
+    //vertexArray = new VertexArray(particles);
+    this.maxParticleCount = maxParticleCount;
+    }
+    public ParticleSystem(float cx,float cy, float width, float height) {
     	 float squareCoord[] = { cx-(0.5f*width), cy+(0.5f*height), 0.0f,   // top left
     			 				 cx-(0.5f*width), cy-(0.5f*height), 0.0f,   // bottom left
     			 				 cx+(0.5f*width), cy-(0.5f*height), 0.0f,   // bottom right
@@ -84,10 +86,10 @@ class Square {
         vertexBuffer.put(squareCoords);
         vertexBuffer.position(0);
         
-        bb= ByteBuffer.allocateDirect(this.textureCoords.length * 4);
+        bb= ByteBuffer.allocateDirect(textureCoords.length * 4);
         bb.order(ByteOrder.nativeOrder());
         textureBuffer = bb.asFloatBuffer();
-        textureBuffer.put(this.textureCoords);
+        textureBuffer.put(textureCoords);
         textureBuffer.position(0);
 
 
@@ -136,26 +138,6 @@ class Square {
     	 bitmap.recycle();
     	
     }
-    
-    public void loadGLTexture(GL10 gl,Bitmap bitmap) {
-    	
-    	
-    	// generate one texture pointer
-    	gl.glGenTextures(1, textures, 0);
-        // ...and bind it to our array
-        gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
-        // create nearest filtered texture
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
-    	gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
-    	
-    	
-    	 GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
-    
-    	 // Clean up
-    	
-    	 //bitmap.recycle();
-    	
-    }
 
 
     public void draw(float[] mvpMatrix) {
@@ -175,16 +157,16 @@ class Square {
         GLES20.glEnableVertexAttribArray(mTextureCoordinateHandle);
         GLES20.glVertexAttribPointer(mTextureCoordinateHandle, COORDS_PER_TEXTURE,
                                      GLES20.GL_FLOAT, false,
-                                     textureStride, textureBuffer);
+                                     0, textureBuffer);
         
 
         // get handle to fragment shader's vColor member
-        //mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
+        mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
 
         // Set color for drawing the triangle
         //GLES20.glUniform4fv(mColorHandle, 1, color, 0);
         
-        mTextureUniformHandle = GLES20.glGetUniformLocation(mProgram, "u_TextureUnit");
+        mTextureUniformHandle = GLES20.glGetUniformLocation(mProgram, "u_Texture");
         mTextureCoordinateHandle = GLES20.glGetAttribLocation(mProgram, "a_TexCoordinate");
      
         
@@ -209,9 +191,9 @@ class Square {
                               GLES20.GL_UNSIGNED_SHORT, drawListBuffer);
 
         // Disable vertex array
-        mPositionHandle =0;
-        mTextureCoordinateHandle =0;
         GLES20.glDisableVertexAttribArray(mPositionHandle);
         GLES20.glDisableVertexAttribArray(mTextureCoordinateHandle);
     }
 }
+
+}*/

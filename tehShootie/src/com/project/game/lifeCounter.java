@@ -3,6 +3,7 @@ package com.project.game;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 
 public class lifeCounter {
 	
@@ -17,12 +18,12 @@ public class lifeCounter {
 		mSquare2 = new Square(-0.5f,-.95f,0.1f,0.1f);
 		mSquare3 = new Square(-0.6f,-.95f,0.1f,0.1f);
 	}
-	public void loadGLTexture(GL10 gl, Context context, int resourceID){
+	public void loadGLTexture(GL10 gl, Bitmap bitmap){
 		
 		 
-		 mSquare1.loadGLTexture(gl, context, resourceID);
-		 mSquare2.loadGLTexture(gl, context, resourceID);
-		 mSquare3.loadGLTexture(gl, context, resourceID);
+		 mSquare1.loadGLTexture(gl, bitmap);
+		 mSquare2.loadGLTexture(gl, bitmap);
+		 mSquare3.loadGLTexture(gl, bitmap);
 
 	 }
 	 
