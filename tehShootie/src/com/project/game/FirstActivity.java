@@ -22,7 +22,6 @@ public class FirstActivity extends SwarmActivity {
         // as the ContentView for this Activity
         mGLView = new MyGLSurfaceView(this);
         setContentView(mGLView);
-       
     }
 
     @Override
