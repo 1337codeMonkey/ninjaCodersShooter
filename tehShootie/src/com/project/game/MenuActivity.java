@@ -24,7 +24,7 @@ public class MenuActivity extends SwarmActivity {
                 this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
                 setContentView(R.layout.activity_main);
                 audio = new AndroidAudio(this);
-                music = (AndroidMusic) audio.newMusic("tehSandStorm.mp3");
+                music = (AndroidMusic) audio.newMusic("pyGybigare.ogg");
         }
 
         @Override
