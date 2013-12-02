@@ -14,12 +14,17 @@ import com.swarmconnect.SwarmActivity;
 
 public class MenuActivity extends SwarmActivity {
 
+	private AndroidAudio audio;
+    private AndroidMusic music;
+    
         @Override
         protected void onCreate(Bundle savedInstanceState) {
                 super.onCreate(savedInstanceState);
                 this.requestWindowFeature(Window.FEATURE_NO_TITLE);
                 this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
                 setContentView(R.layout.activity_main);
+                audio = new AndroidAudio(this);
+                music = (AndroidMusic) audio.newMusic("tehSandStorm.mp3");
         }
 
         @Override
@@ -51,5 +56,29 @@ public class MenuActivity extends SwarmActivity {
         	}
         	else
                 Swarm.showDashboard();
+        }
+        
+        @Override
+        protected void onStart() {
+        	super.onStart();
+        	music.play();
+        	music.setLooping(true);
+        }
+        
+        @Override
+        protected void onPause() {
+            super.onPause();
+            music.pause();
+        }
+        @Override
+        protected void onResume() {
+            super.onResume();
+            music.play();
+        }
+        
+        @Override
+        protected void onStop() {
+        	super.onStop();
+        	music.stop();
         }
 }
