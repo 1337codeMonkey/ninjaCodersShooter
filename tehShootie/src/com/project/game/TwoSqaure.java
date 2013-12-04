@@ -48,6 +48,7 @@ class TwoSquare {
     private int mTextureUniformHandle;
     private int mTextureCoordinateHandle;
     float[] mTranslationMatrix = new float[16];
+    float[] mScratch = new float[16];
     public float dy =0;
 
     // number of coordinates per vertex in this array
@@ -137,7 +138,7 @@ class TwoSquare {
     	
     	Matrix.setIdentityM(mTranslationMatrix, 0);
 		Matrix.translateM(mTranslationMatrix, 0, dx, 0, 0);
-		Matrix.multiplyMM(mvpMatrix, 0,mvpMatrix, 0,mTranslationMatrix , 0);
+		Matrix.multiplyMM(mScratch, 0,mvpMatrix, 0,mTranslationMatrix , 0);
 		
         // Add program to OpenGL environment
         GLES20.glUseProgram(mProgram);
@@ -181,7 +182,7 @@ class TwoSquare {
         glRenderer.checkGlError("glGetUniformLocation");
 
         // Apply the projection and view transformation
-        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mvpMatrix, 0);
+        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false,mScratch, 0);
         glRenderer.checkGlError("glUniformMatrix4fv");
 
         // Draw the square

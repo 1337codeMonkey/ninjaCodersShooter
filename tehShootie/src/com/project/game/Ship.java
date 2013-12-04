@@ -16,6 +16,10 @@ public class Ship {
 	public Square mSquare;
 	public int resourceID;
 	public lifeCounter lifeC;
+	public float rotationAngle = 0;
+	public int powerAmount = 0;
+	public float dx;
+	public float dy;
 	public Ship(float cx,float cy, float width, float height ) {
 		mSquare = new Square(cx,cy,width,height);
 		centerX = cx;
@@ -32,6 +36,7 @@ public class Ship {
 		 lifeC.loadGLTexture(gl, bitmap);
 	 }
 	 public void draw(float[] mvpMatrix1, float[] mvpMatrix2) {
+		 
 		 mSquare.draw(mvpMatrix1);
 		 lifeC.draw(mvpMatrix2,life);
 	 }
@@ -42,24 +47,24 @@ public class Ship {
 		 centerY = orgCenterY + y;
 	 }
 	 public float getShootX(){
-		 return centerX;
+		 return orgCenterX +dx;
 	 }
 	 public float getShootY(){
-		 return centerY+(0.5f*height);
+		 return orgCenterY + dy+(0.5f*height);
 	 }
 	 public void isShoot(){
 		 life+=-1;
 	 }
 	 public float getLeftBound(){
-		 return centerX-(0.5f*width);
+		 return orgCenterX + dx-(0.5f*width);
 	 }
 	 public float getRightBound(){
-		 return centerX+(0.5f*width);
+		 return orgCenterX + dx+(0.5f*width);
 	 }
 	 public float getNorthBound(){
-		 return centerY+(0.5f*height);
+		 return orgCenterY + dy+(0.5f*height);
 	 }
 	 public float getSouthBound(){
-		 return centerY-(0.5f*height);
+		 return orgCenterY + dy-(0.5f*height);
 	 }
 }

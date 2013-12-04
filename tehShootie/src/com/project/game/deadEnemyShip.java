@@ -10,6 +10,7 @@ public class deadEnemyShip {
 	TwoSquare mSquare2;
 	float dx;
 	float dy;
+	private float[] matrix = new float[16];
 	
 	public deadEnemyShip(float x1, float x2, float x3, float cy, float width, float height){
 		float scale = (x2-x1)/width;
@@ -21,8 +22,10 @@ public class deadEnemyShip {
                  0.0f, 1.0f,
                  1.0f, 1.0f,
                  1.0f, 0.0f};
-		mSquare1 = new TwoSquare(((x1+x2)/2.0f),cy,width,height,textureCoords1);
-		mSquare2 = new TwoSquare(((x2+x3)/2.0f),cy,width,height,textureCoords2);
+		float width1 = Math.abs(x2-x1);
+		float width2 = Math.abs(x3-x2);
+		mSquare1 = new TwoSquare(((x1+x2)/2.0f),cy,width1,height,textureCoords1);
+		mSquare2 = new TwoSquare(((x2+x3)/2.0f),cy,width2,height,textureCoords2);
 		
 	}
 	 public void loadGLTexture(GL10 gl ,Bitmap bitmap){
@@ -30,8 +33,10 @@ public class deadEnemyShip {
 		 mSquare2.loadGLTexture(gl, bitmap);
 	 }
 	 public void draw(float[] mvpMatrix) {
-		 mSquare1.draw(mvpMatrix,-dx);
-		 mSquare2.draw(mvpMatrix,dx);
+		
+		 mSquare2.draw(mvpMatrix,2.0f*(float)Math.pow(dx, 2));
+		 mSquare1.draw(mvpMatrix,-2.0f*(float)Math.pow(dx, 2));
+		 
 	 }
 
 }

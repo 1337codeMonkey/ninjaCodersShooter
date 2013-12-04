@@ -20,6 +20,7 @@ public class EnemyShip {
 	public float sdx = 0.0f;
 	public float sdy = 0.0f;
 	public float dAngle = 0.0f;
+	public boolean beamPowerUp = false;
 	public EnemyShip(float cx,float cy, float width, float height ) {
 		mSquare = new Square(cx,cy,width,height);
 		centerX = cx;

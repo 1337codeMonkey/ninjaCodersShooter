@@ -14,6 +14,7 @@ public class Bullet {
 	public Square mSquare;
 	public int resourceID;
 	public float dy = 0.0f;
+	public float dx = 0.0f;
 	public Bullet(float cx,float cy, float width, float height ) {
 		mSquare = new Square(cx,cy,width,height);
 		centerX = cx;
