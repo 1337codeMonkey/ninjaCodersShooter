@@ -125,8 +125,9 @@ class MyGLSurfaceView extends GLSurfaceView implements SensorEventListener {
                 if(Math.abs(linearAcceleration[i]) < 1.0f)
                         linearAcceleration[i] = 1.0f;
         }*/
-        mRenderer.dxShip += (-0.02f*(input[0]));
-        mRenderer.dyShip += (-0.02f*(input[1]));
+       
+        mRenderer.dxShip = (-0.02f*(input[0]));
+        mRenderer.dyShip = (-0.02f*(input[1]));
             
     }
 
@@ -150,20 +151,25 @@ class MyGLSurfaceView extends GLSurfaceView implements SensorEventListener {
           float normalizedY = -(y/(float)this.getHeight()*2-1);
           switch (e.getAction()) {
          
-
-              case MotionEvent.ACTION_MOVE:
-              	
-                  
+          	  case MotionEvent.ACTION_DOWN:
+          		  mRenderer.shootBeam = true;
+          		  return true;
+          	  case MotionEvent.ACTION_UP:
+          		  mRenderer.shootBeam = false;
+          		  return true;
+          		  
+            /*  case MotionEvent.ACTION_MOVE:
 
                   float dx = normalizedX - mPreviousX;
                   float dy = normalizedY - mPreviousY;
 
-                 
                   mRenderer.dyShip = mRenderer.dyShip + dy;
                   mRenderer.dxShip = mRenderer.dxShip + dx;
+                  
+             
+              */
+            	  
                
-                  mRenderer.isShooting = true;
-              
           }
 
           mPreviousX = normalizedX;

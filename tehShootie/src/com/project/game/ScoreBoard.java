@@ -3,6 +3,8 @@ package com.project.game;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 public class ScoreBoard {
 	public Square mSquare1;
@@ -17,13 +19,19 @@ public class ScoreBoard {
 	boolean change2 = false;
 	boolean change3 = false;
 	boolean change4 = false;
+	public Bitmap[] bitmaps1 = new Bitmap[10];
 	
 	
-	public ScoreBoard(){
+	public ScoreBoard(Bitmap[] bitmap){
 		mSquare1 = new Square(0.3f,-.95f,0.1f,0.1f);
 		mSquare2 = new Square(0.4f,-.95f,0.1f,0.1f);
 		mSquare3 = new Square(0.5f,-.95f,0.1f,0.1f);
 		mSquare4 = new Square(0.6f,-.95f,0.1f,0.1f);
+
+
+    	bitmaps1 = bitmap;
+    
+    	
 	}
 	 public void loadGLTexture(GL10 gl, Context context){
 		 score4++;
@@ -43,24 +51,24 @@ public class ScoreBoard {
 			 score1++;
 		 }
 		 
-		 mSquare1.loadGLTexture(gl, context, getResourceId(score1));
-		 mSquare2.loadGLTexture(gl, context, getResourceId(score2));
-		 mSquare3.loadGLTexture(gl, context, getResourceId(score3));
-		 mSquare4.loadGLTexture(gl, context, getResourceId(score4));
+		 mSquare1.loadGLTexture(gl, getResourceId(score1));
+		 mSquare2.loadGLTexture(gl, getResourceId(score2));
+		 mSquare3.loadGLTexture(gl, getResourceId(score3));
+		 mSquare4.loadGLTexture(gl, getResourceId(score4));
 	 }
-	 public int getResourceId(int x){
+	 public Bitmap getResourceId(int x){
 		 switch(x){
-		 	case 0: return R.drawable.zero;
-		 	case 1: return R.drawable.one;
-		 	case 2: return R.drawable.two;
-		 	case 3: return R.drawable.three;
-		 	case 4: return R.drawable.four;
-		 	case 5: return R.drawable.five;
-		 	case 6: return R.drawable.six;
-		 	case 7: return R.drawable.seven;
-		 	case 8: return R.drawable.eight;
-		 	case 9: return R.drawable.nine;
-		 	default: return R.drawable.zero;
+		 	case 0: return bitmaps1[0];
+		 	case 1: return bitmaps1[1];
+		 	case 2: return bitmaps1[2];
+		 	case 3: return bitmaps1[3];
+		 	case 4: return bitmaps1[4];
+		 	case 5: return bitmaps1[5];
+		 	case 6: return bitmaps1[6];
+		 	case 7: return bitmaps1[7];
+		 	case 8: return bitmaps1[8];
+		 	case 9: return bitmaps1[9];
+		 	default: return bitmaps1[0];
 		 }
 	 }
 	 public void draw(float[] mvpMatrix) {

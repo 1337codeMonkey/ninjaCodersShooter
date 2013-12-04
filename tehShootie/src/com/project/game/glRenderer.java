@@ -19,16 +19,22 @@ public class glRenderer implements GLSurfaceView.Renderer {
     public volatile Ship playerShip;
     private Square   mSquare;
     private Square background;
+    private Square background1;
     private GameOver gameOverScreen;
     private ScoreBoard scoreB;
+    private BeamPower Beam;
 
     private final float[] mMVPMatrix = new float[16];
     private final float[] mScratch = new float[16];
     private final float[] mProjMatrix = new float[16];
     private final float[] mVMatrix = new float[16];
     private final float[] mTranslationMatrix = new float[16]; 
-    private int[] mesh = new int[11];
-    private Bitmap[] bitmaps = new Bitmap[11];
+    private int[] mesh = new int[12];
+    private Bitmap[] bitmaps = new Bitmap[12];
+    private int[] mesh1 = new int[10];
+    private Bitmap[] bitmaps1 = new Bitmap[10];
+    private int[] mesh2 = new int[2];
+    private Bitmap[] bitmaps2 = new Bitmap[2];
 
     // Declare as volatile because we are updating it from another thread
     public volatile float mAngle;
@@ -36,6 +42,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     public volatile float dxShip = 0.0f;
 
     public float dy=0.0f;
+    public float dyBackground = 0.0f;
     long lastFrameTime = (long)0;
     public float dx=0.0f;
     public float dAngle = 0.0f;
@@ -46,7 +53,8 @@ public class glRenderer implements GLSurfaceView.Renderer {
     public boolean invincible = false;
     public float sdx = 0.0f;
     public float sdy = 0.0f;
-    public volatile boolean isShooting = false;
+    public volatile boolean isShooting = true;
+    public volatile boolean shootBeam = false;
     private final int MAX_BULLET = 10;
     private final int MAX_ENEMY = 10;
     private Bullet[] bulletArray = new Bullet[MAX_BULLET];
@@ -62,6 +70,8 @@ public class glRenderer implements GLSurfaceView.Renderer {
     private Context context;
     boolean genBullet = false;
     boolean genEnemy = false;
+    boolean genBeam = false;
+    boolean isFiringBeam = false;
     boolean playerHit = false;
     boolean gameOver = false;
     boolean restart = false;
@@ -74,6 +84,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
 	boolean a5 = true;
     public int score = 0;
     public int score2 =0;
+    public int score3 =0;
     Random randomG = new Random();
     boolean gamestart = true;
     int deadCount = 0;
@@ -98,11 +109,14 @@ public class glRenderer implements GLSurfaceView.Renderer {
        playerShip = new Ship(0.0f,-0.8f,0.25f,0.25f);
        playerShip.loadGLTexture(unused,bitmaps[0]);
        background = new Square(0.0f,0.0f,2.0f,2.0f);
-       background.loadGLTexture(unused, bitmaps[3]);
+       background.loadGLTexture(unused, bitmaps[2]);
+       background.loadGLTexture(unused, bitmaps[2]);
+       background1 = new Square(0.0f,2.0f,2.0f,2.0f);
+       background1.loadGLTexture(unused, bitmaps[2]);
        //mSquare = new Square(0.0f,-0.75f,0.025f,0.05f);
-       scoreB = new ScoreBoard();
+       scoreB = new ScoreBoard(bitmaps1);
        gameOverScreen = new GameOver();
-       gameOverScreen.loadGLTexture(unused, bitmaps[4], bitmaps[7],bitmaps[9]);
+       gameOverScreen.loadGLTexture(unused, bitmaps[3], bitmaps[6],bitmaps[8]);
        gamestart = false;
         //mTriangle = new Triangle();
         //mTriangle.loadGLTexture(unused, this.context);
@@ -138,8 +152,9 @@ public class glRenderer implements GLSurfaceView.Renderer {
         
         if(!gameOver){
     	update(unused); 
-    	background.draw(mMVPMatrix);
-    	rendership();
+    	
+    	renderBackground(unused);
+    	rendership(unused);
     	renderbullet(unused);
     	renderEnemyShip(unused);
     	renderScoreBoard();
@@ -147,12 +162,12 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	}
         if(gameOver){
         	if(retryHold){
-        		 gameOverScreen.loadGLTexture(unused,bitmaps[4], bitmaps[8],bitmaps[9]);
+        		 gameOverScreen.loadGLTexture(unused,bitmaps[3], bitmaps[7],bitmaps[8]);
         	}
         	else if(swarmHold)
-        		 gameOverScreen.loadGLTexture(unused,bitmaps[4], bitmaps[7],bitmaps[10]);
+        		 gameOverScreen.loadGLTexture(unused,bitmaps[3], bitmaps[6],bitmaps[9]);
         	else
-        		 gameOverScreen.loadGLTexture(unused,bitmaps[4], bitmaps[7],bitmaps[9]);
+        		 gameOverScreen.loadGLTexture(unused,bitmaps[3], bitmaps[6],bitmaps[8]);
         	
         	background.draw(mMVPMatrix);
         	renderScoreBoard();
@@ -163,7 +178,6 @@ public class glRenderer implements GLSurfaceView.Renderer {
     public void loadMesh(GL10 gl, Context context){
     	int[] mesh = {R.drawable.airplane,
     				  R.drawable.airplane02,
-    				  R.drawable.blackboard,
     				  R.drawable.check,
     				  R.drawable.gameover,
     				  R.drawable.pencil,
@@ -172,8 +186,27 @@ public class glRenderer implements GLSurfaceView.Renderer {
     				  R.drawable.retry2,
     				  R.drawable.swarm1,
     				  R.drawable.swarm2,
+    				  R.drawable.beam,
+    				  R.drawable.beam2
     	};  	
     	this.mesh = mesh;
+	 	int[] mesh1 = {R.drawable.zero,
+				  R.drawable.one,
+				  R.drawable.two,
+				  R.drawable.three,
+				  R.drawable.four,
+				  R.drawable.five,
+				  R.drawable.six,
+				  R.drawable.seven,
+				  R.drawable.eight,
+				  R.drawable.nine,
+				
+	 	};  
+	 	this.mesh1 = mesh1;
+		int[] mesh2 = {R.drawable.zero,
+				  	   R.drawable.blackboard		
+	 	};  
+	 	this.mesh2 = mesh2;
     	
     }
     
@@ -187,6 +220,16 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	{
     		this.bitmaps[i] = BitmapFactory.decodeResource(context.getResources(),
         			this.mesh[i],options);
+    	}
+    	for(int i =0;i<this.mesh1.length;i++)
+    	{
+    		this.bitmaps1[i] = BitmapFactory.decodeResource(context.getResources(),
+        			this.mesh1[i],options);
+    	}
+    	for(int i =0;i<this.mesh2.length;i++)
+    	{
+    		this.bitmaps2[i] = BitmapFactory.decodeResource(context.getResources(),
+        			this.mesh2[i],options);
     	}
     		
     	
@@ -206,6 +249,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	 sdy = 0.0f;
     	 bulletArray = new Bullet[MAX_BULLET];
     	 enemyArray = new EnemyShip[MAX_BULLET];
+    	 dEnemyShip = new deadEnemyShip[MAX_ENEMY];
     	 bulletCount = 0;
     	 bulletOnScreen = 0;
     	 enemyCount = 0;
@@ -224,11 +268,13 @@ public class glRenderer implements GLSurfaceView.Renderer {
          playerShip = new Ship(0.0f,-0.8f,0.25f,0.25f);
          playerShip.loadGLTexture(gl, bitmaps[0]);
          background = new Square(0.0f,0.0f,2.0f,2.0f);
-         background.loadGLTexture(gl, bitmaps[3]);
+         background.loadGLTexture(gl, bitmaps[2]);
+         background1 = new Square(0.0f,2.0f,2.0f,2.0f);
+         background1.loadGLTexture(gl, bitmaps[2]);
           //mSquare = new Square(0.0f,-0.75f,0.025f,0.05f);
-         scoreB = new ScoreBoard();
+         scoreB = new ScoreBoard(bitmaps1);
          gameOverScreen = new GameOver();
-         gameOverScreen.loadGLTexture(gl, bitmaps[4], bitmaps[7],bitmaps[9]);
+         gameOverScreen.loadGLTexture(gl, bitmaps[3], bitmaps[6],bitmaps[8]);
     }
     
     public void update(GL10 gl){
@@ -244,10 +290,12 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	currentTime =  System.currentTimeMillis();
     	float elapsed = (currentTime - lastFrameTime) * .001f;//convert ms to seconds
     	dy =  elapsed*1.0f;
+    	dyBackground += -dy;
     	dAngle = elapsed*20.0f;
     	totalTime += elapsed;
     	enemyTimer1 += elapsed;
     	lastFrameTime = currentTime; 
+    
     	if(invincible)
     		invincibleani(elapsed,gl,true);
     	
@@ -260,11 +308,43 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	{
     		genEnemy = true;
     	}
+    	if(shootBeam&&playerShip.powerAmount >=0){
+    		isShooting = false;
+    		genBeam = true;
+    		shootBeam = false;
+    		
+    	}
+    	if(genBeam)
+    	{
+    		Beam = new BeamPower(0.0f,0.45f,0.2f,2.0f);
+    		Beam.loadGLTexture(gl, bitmaps[10]);
+    		playerShip.powerAmount--;
+    		isFiringBeam = true;
+    		genBeam = false;
+    	}
+    	
+    	if(isFiringBeam){
+    		Beam.timeRe-=elapsed;
+    		if(Beam.timeRe <=0.0f){
+    			isFiringBeam = false;
+    			isShooting = true;
+    		}
+    		if(Beam.timeRe<=0.5f)
+    			Beam.loadGLTexture(gl, bitmaps[11]);
+    		else if(Beam.timeRe<=1.0f)
+    			Beam.loadGLTexture(gl, bitmaps[10]);
+    		else if(Beam.timeRe<=1.5f)
+    			Beam.loadGLTexture(gl, bitmaps[11]);
+    		else if(Beam.timeRe<=2.0f)
+    			Beam.loadGLTexture(gl, bitmaps[10]);
+    		else if(Beam.timeRe<=2.5f)
+    			Beam.loadGLTexture(gl, bitmaps[11]);
+    	}
     	if(isShooting&&genBullet){
     		//if (bulletOnScreen <=MAX_BULLET && genBullet) {
     			if (bulletCount == MAX_BULLET ) bulletCount = 0;
     		 bulletArray[bulletCount]   = new Bullet(playerShip.getShootX()+0.0f,playerShip.getShootY()+.025f,0.025f,0.05f);
-    		 bulletArray[bulletCount].loadGLTexture(gl, bitmaps[6]);
+    		 bulletArray[bulletCount].loadGLTexture(gl, bitmaps[5]);
     		 bulletCount++;
     		
     		 //if(bulletOnScreen<MAX_BULLET)
@@ -286,8 +366,13 @@ public class glRenderer implements GLSurfaceView.Renderer {
     		if (enemyCount == MAX_ENEMY) enemyCount = 0;
     		
     		 enemyArray[enemyCount]   = new EnemyShip(xInt1,1.0f,0.15f,0.10f);
-    		 
-    		 enemyArray[enemyCount].loadGLTexture(gl, bitmaps[2]);
+    		 if(score3 >= 20){
+    			 enemyArray[enemyCount].beamPowerUp = true;
+    			 enemyArray[enemyCount].loadGLTexture(gl, bitmaps1[0]);
+    			 score3 = 0;
+    		 }
+    		 else
+    		 enemyArray[enemyCount].loadGLTexture(gl, bitmaps2[1]);
     		 
     		 
     		 enemyCount++;
@@ -313,25 +398,35 @@ public class glRenderer implements GLSurfaceView.Renderer {
         		 if ((enemyArray[j] != null)&&!invincible&& i == 0){
         			 boolean collideShip = checkCollisionShip(enemyArray[j]);
             	 	 if(collideShip){
-            	 		 playerShip.life--;
-            			 invincible = true;
-            			 
+            	 		 if(enemyArray[j].beamPowerUp){
+            	 			 playerShip.powerAmount++;
+            	 		 	 enemyArray[j] = null;
+            	 		 }
+            	 		 else{
+            	 			 playerShip.life--;
+            	 			 invincible = true;
+            	 		 }
             	     }
             		 
         		 }
-        		 if ((bulletArray[i] != null)&&(enemyArray[j] != null)){
-        			 boolean collide = checkCollision(bulletArray[i],enemyArray[j]);
+        		 if ((bulletArray[i] != null)&&(enemyArray[j] != null)&&(!enemyArray[j].beamPowerUp)){
+        			 boolean collide = false;
+        			 if(isShooting)collide = checkCollision(bulletArray[i],enemyArray[j]);
+        			 else if(isFiringBeam)collide = checkCollision(Beam,enemyArray[j]);
         			 if(collide){
+        				 Bullet b = bulletArray[i];
+        				 if(isFiringBeam) b = Beam;
         				 if(deadCount == MAX_ENEMY) deadCount = 0;
         				 deadEnemyShip deadShip = new deadEnemyShip(enemyArray[j].getLeftBound(),
-        						 									(bulletArray[i].getLeftBound()+bulletArray[i].getRightBound())/2,
+        						 									(b.getLeftBound()+b.getRightBound())/2,
         						 										enemyArray[j].getRightBound(),enemyArray[j].getCY(),enemyArray[j].getWidth(),enemyArray[j].getHeight());
-        				 deadShip.loadGLTexture(gl, bitmaps[2]);
+        				 deadShip.loadGLTexture(gl, bitmaps2[1]);
         				 dEnemyShip[deadCount] = deadShip;
         				 enemyArray[j] = null;
         				 scoreB.loadGLTexture(gl, this.context);
         				 score++;
         				 score2++;
+        				 score3++;
         				 deadCount++;
         				 
         			 }
@@ -393,6 +488,15 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	else return false;
     		
     }
+    public void renderBackground(GL10 gl){
+    	if(dyBackground <= -2.0) dyBackground = 0.0f;
+        Matrix.setIdentityM(mTranslationMatrix, 0);
+        Matrix.translateM(mTranslationMatrix, 0, 0, dyBackground, 0);
+        Matrix.multiplyMM(mScratch, 0,mMVPMatrix, 0, mTranslationMatrix , 0);
+        //bulletArray[i].loadGLTexture(gl, this.context);
+    	background.draw(mScratch);
+    	background1.draw(mScratch);
+    }
     public void renderbullet(GL10 gl){
     	
         for( int i = 0; i<MAX_BULLET; i++){
@@ -438,7 +542,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
         for( int i = 0; i<MAX_ENEMY; i++){
         	if(dEnemyShip[i] != null){
         	
-        		dEnemyShip[i].dx+=dy;
+        		dEnemyShip[i].dx+=(dy);
         		dEnemyShip[i].dy+=(dy*2.0f);
         		Matrix.setIdentityM(mTranslationMatrix, 0);
         		Matrix.translateM(mTranslationMatrix, 0, 0, dEnemyShip[i].dy, 0);
@@ -450,7 +554,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     }
     
     
-    public void rendership(){
+    public void rendership(GL10 gl){
         //Create a rotation for the triangle
     	//long time = SystemClock.uptimeMillis() % 4000L;
     	//float angle = 0.090f * ((int) time);
@@ -465,29 +569,39 @@ public class glRenderer implements GLSurfaceView.Renderer {
      // Matrix.multiplyMM(mMVPMatrix, 0, mRotationMatrix, 0, mMVPMatrix, 0);
 
       // Draw triangle
-    	playerShip.setX(dxShip);
-    	playerShip.setY(dyShip);
+    	
+    	playerShip.dx+=(dxShip);
+    	playerShip.dy+=(dyShip);
     	if(playerShip.getSouthBound()<=-0.925f){
     		dyShip = 0.0f;
-    		playerShip.setY(dyShip);
+    		playerShip.dy=(dyShip);
     	}
     	if(playerShip.getNorthBound()>=1.0f){
+    		
     		dyShip = 1.675f;
-    		playerShip.setY(dyShip);
+    		playerShip.dy=(dyShip);
     	}
     	if(playerShip.getLeftBound()<=-0.7f){
+    		
     		dxShip = -.575f;
-    		playerShip.setY(dyShip);
+    		playerShip.dx=(dxShip);
     	}
     	if(playerShip.getRightBound()>=0.7f){
+    		
     		dxShip = 0.575f;
-    		playerShip.setY(dyShip);
+    		playerShip.dx=(dxShip);
     	}
+    	
     	Matrix.setIdentityM(mTranslationMatrix, 0);
-    	Matrix.translateM(mTranslationMatrix,0, dxShip, dyShip, 0);
+    	Matrix.translateM(mTranslationMatrix,0, playerShip.dx, playerShip.dy, 0);
     	Matrix.multiplyMM(mScratch, 0,mMVPMatrix  , 0,mTranslationMatrix, 0);
     	
     	playerShip.draw(mScratch,mMVPMatrix);
+    	if(isFiringBeam){
+    		Beam.dx = playerShip.dx;
+    		Beam.dy = playerShip.dy;
+    		Beam.draw(mScratch);
+    	}
     
     }
     public void renderScoreBoard(){
