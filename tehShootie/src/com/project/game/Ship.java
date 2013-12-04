@@ -14,6 +14,9 @@ public class Ship {
 	public float height;
 	public int life = 3;
 	public Square mSquare;
+	public Square mSquare1;
+	public Square mSquare2;
+	public Square mSquare3;
 	public int resourceID;
 	public lifeCounter lifeC;
 	public float rotationAngle = 0;
@@ -29,16 +32,36 @@ public class Ship {
 		this.width = width;
 		this.height = height;
 		lifeC = new lifeCounter();
+		mSquare1 = new Square(0.4f,-.85f,0.1f,0.1f);
+		mSquare2 = new Square(0.5f,-.85f,0.1f,0.1f);
+		mSquare3 = new Square(0.6f,-.85f,0.1f,0.1f);
 				
 	}
-	 public void loadGLTexture(GL10 gl, Bitmap bitmap){
+	 public void loadGLTexture(GL10 gl, Bitmap bitmap,Bitmap bitmap1){
 		 mSquare.loadGLTexture(gl, bitmap);
 		 lifeC.loadGLTexture(gl, bitmap);
+		 mSquare1.loadGLTexture(gl, bitmap1); 
+		 mSquare2.loadGLTexture(gl, bitmap1); 
+		 mSquare3.loadGLTexture(gl, bitmap1); 
 	 }
 	 public void draw(float[] mvpMatrix1, float[] mvpMatrix2) {
 		 
 		 mSquare.draw(mvpMatrix1);
 		 lifeC.draw(mvpMatrix2,life);
+		 if(powerAmount == 3){
+			 mSquare1.draw(mvpMatrix2);
+		 	 mSquare2.draw(mvpMatrix2);
+		 	 mSquare3.draw(mvpMatrix2);
+		 }
+		 	 
+		 if(powerAmount == 2){
+			 mSquare2.draw(mvpMatrix2);
+			 mSquare3.draw(mvpMatrix2);
+		 }
+			 
+		 if(powerAmount == 1)
+			 mSquare3.draw(mvpMatrix2);
+		 
 	 }
 	 public void setX(float x){
 		 centerX = orgCenterX + x;

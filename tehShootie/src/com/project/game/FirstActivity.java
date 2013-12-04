@@ -24,7 +24,7 @@ public class FirstActivity extends SwarmActivity  {
 
         // Create a GLSurfaceView instance and set it
         // as the ContentView for this Activity
-        mGLView = new MyGLSurfaceView(this,getSystemService(Context.SENSOR_SERVICE) );
+        mGLView = new MyGLSurfaceView(this,getSystemService(Context.SENSOR_SERVICE),this );
         setContentView(mGLView);
         
         
@@ -56,7 +56,7 @@ class MyGLSurfaceView extends GLSurfaceView implements SensorEventListener {
     private final glRenderer mRenderer;
     float[] linearAcceleration = {0.0f, 0.0f};//, 0.0f};
 
-    public MyGLSurfaceView(Context context,Object o) {
+    public MyGLSurfaceView(Context context,Object o,Activity act) {
         super(context);
         SensorManager manager = (SensorManager) o; 
         Sensor accelerometer = manager.getSensorList( Sensor.TYPE_ACCELEROMETER).get(0);
@@ -67,7 +67,7 @@ class MyGLSurfaceView extends GLSurfaceView implements SensorEventListener {
         setEGLContextClientVersion(2);
        
         // Set the Renderer for drawing on the GLSurfaceView
-        mRenderer = new glRenderer(context);
+        mRenderer = new glRenderer(context,act);
         setRenderer(mRenderer);
 
         // Render the view only when there is a change in the drawing data
@@ -210,6 +210,15 @@ class MyGLSurfaceView extends GLSurfaceView implements SensorEventListener {
             
         }
     	return true;
+    }
+    @Override
+    public void onPause() {
+        super.onPause();
+        // The following call pauses the rendering thread.
+        // If your OpenGL application is memory intensive,
+        // you should consider de-allocating objects that
+        // consume significant memory here.
+        mRenderer.music.pause();
     }
 }
 

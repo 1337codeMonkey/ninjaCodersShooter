@@ -14,7 +14,7 @@ public class ScoreBoard {
 	int score1 = 0;
 	int score2 = 0;
 	int score3 = 0;
-	int score4 = 0;
+	int score4 = -1;
 	boolean change1 = false;
 	boolean change2 = false;
 	boolean change3 = false;
