@@ -19,8 +19,9 @@ public class EnemyShip {
 	public float dx = 0.0f;
 	public float sdx = 0.0f;
 	public float sdy = 0.0f;
-	public float dAngle = 0.0f;
+	public double dAngle = 0.0f;
 	public boolean beamPowerUp = false;
+	public Bitmap bitmap;
 	public EnemyShip(float cx,float cy, float width, float height ) {
 		mSquare = new Square(cx,cy,width,height);
 		centerX = cx;
@@ -33,6 +34,7 @@ public class EnemyShip {
 	}
 	 public void loadGLTexture(GL10 gl, Bitmap bitmap){
 		 mSquare.loadGLTexture(gl, bitmap);
+		 this.bitmap = bitmap;
 	 }
 	 public void draw(float[] mvpMatrix) {
 		 mSquare.draw(mvpMatrix);

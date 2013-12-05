@@ -56,6 +56,29 @@ public class ScoreBoard {
 		 mSquare3.loadGLTexture(gl, getResourceId(score3));
 		 mSquare4.loadGLTexture(gl, getResourceId(score4));
 	 }
+	 public void loadGLTextureB(GL10 gl, Context context){
+		 score1++;
+		 if(score4 == 10)
+		 {
+			 score4 =0;
+			 score3++;
+		 }
+		 if(score3 == 10)
+		 {
+			 score3 =0;
+			 score2++;
+		 }
+		 if(score2 == 10)
+		 {
+			 score2 =0;
+			 score1++;
+		 }
+		 
+		 mSquare1.loadGLTexture(gl, getResourceId(score1));
+		 mSquare2.loadGLTexture(gl, getResourceId(score2));
+		 mSquare3.loadGLTexture(gl, getResourceId(score3));
+		 mSquare4.loadGLTexture(gl, getResourceId(score4));
+	 }
 	 public Bitmap getResourceId(int x){
 		 switch(x){
 		 	case 0: return bitmaps1[0];

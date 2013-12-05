@@ -24,18 +24,20 @@ public class glRenderer implements GLSurfaceView.Renderer {
     private GameOver gameOverScreen;
     private ScoreBoard scoreB;
     private BeamPower Beam;
+    private Boss gameBoss;
 
     private final float[] mMVPMatrix = new float[16];
     private final float[] mScratch = new float[16];
     private final float[] mProjMatrix = new float[16];
     private final float[] mVMatrix = new float[16];
     private final float[] mTranslationMatrix = new float[16]; 
+    private final float[] mRotationMatrix = new float[16]; 
     private int[] mesh = new int[12];
     private Bitmap[] bitmaps = new Bitmap[12];
     private int[] mesh1 = new int[10];
     private Bitmap[] bitmaps1 = new Bitmap[10];
-    private int[] mesh2 = new int[3];
-    private Bitmap[] bitmaps2 = new Bitmap[3];
+    private int[] mesh2 = new int[5];
+    private Bitmap[] bitmaps2 = new Bitmap[5];
 
     // Declare as volatile because we are updating it from another thread
     public volatile float mAngle;
@@ -57,7 +59,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     public volatile boolean isShooting = true;
     public volatile boolean shootBeam = false;
     private final int MAX_BULLET = 10;
-    private final int MAX_ENEMY = 10;
+    private final int MAX_ENEMY = 50;
     private Bullet[] bulletArray = new Bullet[MAX_BULLET];
     private EnemyShip[] enemyArray = new EnemyShip[MAX_ENEMY];
     private deadEnemyShip[] dEnemyShip = new deadEnemyShip[MAX_ENEMY];
@@ -73,6 +75,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     boolean genEnemy = false;
     boolean genBeam = false;
     boolean isFiringBeam = false;
+    boolean bossTime = false;
     boolean playerHit = false;
     boolean gameOver = false;
     boolean restart = false;
@@ -114,10 +117,9 @@ public class glRenderer implements GLSurfaceView.Renderer {
        playerShip = new Ship(0.0f,-0.8f,0.25f,0.25f);
        playerShip.loadGLTexture(unused,bitmaps[0],bitmaps2[0]);
        background = new Square(0.0f,0.0f,2.0f,2.0f);
-       background.loadGLTexture(unused, bitmaps[2]);
-       background.loadGLTexture(unused, bitmaps[2]);
-       background1 = new Square(0.0f,2.0f,2.0f,2.0f);
-       background1.loadGLTexture(unused, bitmaps[2]);
+       background.loadGLTextureB(unused, bitmaps[2]);
+       //background1 = new Square(0.0f,2.0f,2.0f,2.0f);
+       //background1.loadGLTexture(unused, bitmaps[2]);
        //mSquare = new Square(0.0f,-0.75f,0.025f,0.05f);
        scoreB = new ScoreBoard(bitmaps1);
        scoreB.loadGLTexture(unused, this.context);
@@ -155,19 +157,25 @@ public class glRenderer implements GLSurfaceView.Renderer {
         	 reset(unused);
         	 restart = false;
         	 gameOver = false;
+        	 bossTime = false;
               
         	
         }
         
         if(!gameOver){
-    	update(unused); 
+        	if(bossTime)
+        		updateBoss(unused);
+        	else update(unused); 
     	
-    	renderBackground(unused);
-    	rendership(unused);
-    	renderbullet(unused);
-    	renderEnemyShip(unused);
-    	renderScoreBoard();
-    	renderDeadEnemy(unused);
+        	renderBackground(unused);
+        	rendership(unused);
+        	renderbullet(unused);
+        	if(bossTime){
+        		renderBoss(unused);
+        	}
+        	renderEnemyShip(unused);
+        	renderScoreBoard();
+        	renderDeadEnemy(unused);
     	}
         if(gameOver){
         	if(retryHold){
@@ -182,12 +190,13 @@ public class glRenderer implements GLSurfaceView.Renderer {
         	renderScoreBoard();
         	renderGameOver();
         }
+        
     	
     }
     public void loadMesh(GL10 gl, Context context){
     	int[] mesh = {R.drawable.airplane,
     				  R.drawable.airplane02,
-    				  R.drawable.check,
+    				  R.drawable.scrollback,
     				  R.drawable.gameover,
     				  R.drawable.pencil,
     				  R.drawable.pencil02,
@@ -214,7 +223,9 @@ public class glRenderer implements GLSurfaceView.Renderer {
 	 	this.mesh1 = mesh1;
 		int[] mesh2 = {R.drawable.powerup,
 				  	   R.drawable.madpoo,
-				  	   R.drawable.zaozombie
+				  	   R.drawable.zaozombie,
+				  	   R.drawable.evilbear,
+				  	   R.drawable.bosslifebar
 	 	};  
 	 	this.mesh2 = mesh2;
     	
@@ -258,15 +269,20 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	 sdx = 0.0f;
     	 sdy = 0.0f;
     	 bulletArray = new Bullet[MAX_BULLET];
-    	 enemyArray = new EnemyShip[MAX_BULLET];
+    	 enemyArray = new EnemyShip[MAX_ENEMY];
     	 dEnemyShip = new deadEnemyShip[MAX_ENEMY];
     	 bulletCount = 0;
     	 bulletOnScreen = 0;
     	 enemyCount = 0;
     	 enemyOnScreen = 0;
     	 done = false;
-    	 genBullet = false;
+    	 genBullet = true;
     	 genEnemy = false;
+    	 genBeam = false;
+    	 isFiringBeam = false;
+    	 shootBeam = false;
+    	 bossTime = false;
+    	 isShooting = true;
     	 GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
          currentTime = System.currentTimeMillis();
          lastFrameTime = currentTime;
@@ -278,9 +294,9 @@ public class glRenderer implements GLSurfaceView.Renderer {
          playerShip = new Ship(0.0f,-0.8f,0.25f,0.25f);
          playerShip.loadGLTexture(gl, bitmaps[0],bitmaps2[0]);
          background = new Square(0.0f,0.0f,2.0f,2.0f);
-         background.loadGLTexture(gl, bitmaps[2]);
-         background1 = new Square(0.0f,2.0f,2.0f,2.0f);
-         background1.loadGLTexture(gl, bitmaps[2]);
+         background.loadGLTextureB(gl, bitmaps[2]);
+         //background1 = new Square(0.0f,2.0f,2.0f,2.0f);
+         //background1.loadGLTexture(gl, bitmaps[2]);
           //mSquare = new Square(0.0f,-0.75f,0.025f,0.05f);
          scoreB = new ScoreBoard(bitmaps1);
          scoreB.loadGLTexture(gl, this.context);
@@ -354,7 +370,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	if(isShooting&&genBullet){
     		//if (bulletOnScreen <=MAX_BULLET && genBullet) {
     			if (bulletCount == MAX_BULLET ) bulletCount = 0;
-    		 bulletArray[bulletCount]   = new Bullet(playerShip.getShootX()+0.0f,playerShip.getShootY()+.025f,0.025f,0.05f);
+    		 bulletArray[bulletCount]   = new Bullet(playerShip.getShootX()+0.0f,playerShip.getShootY(),0.025f,0.05f);
     		 bulletArray[bulletCount].loadGLTexture(gl, bitmaps[5]);
     		 bulletCount++;
     		
@@ -376,7 +392,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     		
     		if (enemyCount == MAX_ENEMY) enemyCount = 0;
     		
-    		 enemyArray[enemyCount]   = new EnemyShip(xInt1,1.0f,0.15f,0.10f);
+    		 enemyArray[enemyCount]   = new EnemyShip(xInt1,1.0f,0.3f,0.3f);
     		 if(score3 >= 20){
     			 enemyArray[enemyCount].beamPowerUp = true;
     			 enemyArray[enemyCount].loadGLTexture(gl, bitmaps2[0]);
@@ -406,25 +422,27 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	
         for( int i = 0; i<MAX_BULLET; i++)
         	 for( int j = 0; j<MAX_ENEMY; j++){
-        		 if ((enemyArray[j] != null)&&!invincible&& i == 0){
+        		 if(enemyArray[j] != null&&enemyArray[j].beamPowerUp){
         			 boolean collideShip = checkCollisionShip(enemyArray[j]);
             	 	 if(collideShip){
-            	 		 if(enemyArray[j].beamPowerUp){
-            	 			 if( playerShip.powerAmount<3)
-            	 				 playerShip.powerAmount++;
-            	 		 	 enemyArray[j] = null;
-            	 		 }
-            	 		 else{
+            	 		 if( playerShip.powerAmount<3)
+            	 			 playerShip.powerAmount++;
+            	 		 enemyArray[j] = null;
+            	 	 }
+        		 }
+        		 else if ((enemyArray[j] != null)&&!invincible&& i == 0){
+        			 boolean collideShip = checkCollisionShip(enemyArray[j]);
+            	 	 if(collideShip){
             	 			 playerShip.life--;
             	 			 invincible = true;
-            	 		 }
+            	 		 
             	     }
             		 
         		 }
         		 if ((bulletArray[i] != null)&&(enemyArray[j] != null)&&(!enemyArray[j].beamPowerUp)){
         			 boolean collide = false;
         			 if(isShooting)collide = checkCollision(bulletArray[i],enemyArray[j]);
-        			 else if(isFiringBeam)collide = checkCollision(Beam,enemyArray[j]);
+        			 
         			 if(collide){
         				 Bullet b = bulletArray[i];
         				 if(isFiringBeam) b = Beam;
@@ -432,9 +450,10 @@ public class glRenderer implements GLSurfaceView.Renderer {
         				 deadEnemyShip deadShip = new deadEnemyShip(enemyArray[j].getLeftBound(),
         						 									(b.getLeftBound()+b.getRightBound())/2,
         						 										enemyArray[j].getRightBound(),enemyArray[j].getCY(),enemyArray[j].getWidth(),enemyArray[j].getHeight());
-        				 deadShip.loadGLTexture(gl, bitmaps2[1]);
+        				 deadShip.loadGLTexture(gl, enemyArray[j].bitmap);
         				 dEnemyShip[deadCount] = deadShip;
         				 enemyArray[j] = null;
+        				 bulletArray[i] = null;
         				 scoreB.loadGLTexture(gl, this.context);
         				 score++;
         				 score2++;
@@ -443,13 +462,196 @@ public class glRenderer implements GLSurfaceView.Renderer {
         				 
         			 }
         		 }
-        		 
+        		 if(isFiringBeam&&enemyArray[j]!=null){
+        			 if(!enemyArray[j].beamPowerUp){
+        			 boolean collide = checkCollision(Beam,enemyArray[j]);
+        			 if(collide){
+        				 Bullet b = bulletArray[i];
+        				 if(isFiringBeam) b = Beam;
+        				 if(deadCount == MAX_ENEMY) deadCount = 0;
+        				 deadEnemyShip deadShip = new deadEnemyShip(enemyArray[j].getLeftBound(),
+        						 									(b.getLeftBound()+b.getRightBound())/2,
+        						 										enemyArray[j].getRightBound(),enemyArray[j].getCY(),enemyArray[j].getWidth(),enemyArray[j].getHeight());
+        				 deadShip.loadGLTexture(gl, enemyArray[j].bitmap);
+        				 dEnemyShip[deadCount] = deadShip;
+        				 enemyArray[j] = null;
+        				 scoreB.loadGLTexture(gl, this.context);
+        				 score++;
+        				 score2++;
+        				 score3++;
+        				 deadCount++;
+        			 }
+        			 }
+        		 }
         	}
         if(playerShip.life == 0){
         	gameOver = true;
         }
+        if(score >= 50 && score < 100)
+        {
+        	gameBoss = new Boss(0.0f,1.5f,0.5f,0.5f);
+        	gameBoss.loadGLTexture(gl, bitmaps2[3],bitmaps2[4]);
+        	bossTime = true;
+        	enemyTimer2 = 0.5f;
+        	enemyArray = new EnemyShip[MAX_ENEMY];
+        	
+        }
     }
+    public void updateBoss(GL10 gl){
+    	currentTime =  System.currentTimeMillis();
+    	float elapsed = (currentTime - lastFrameTime) * .001f;//convert ms to seconds
+    	dy =  elapsed*1.0f;
+    	dyBackground = 0.0f;
+    	dAngle = elapsed*20.0f;
+    	totalTime += elapsed;
+    	enemyTimer1 += elapsed;
+    	lastFrameTime = currentTime; 
     
+    	if(invincible)
+    		invincibleani(elapsed,gl,true);
+    	
+    	if(totalTime > 0.5f){
+    		genBullet = true;
+    	}
+    	if(enemyTimer1 > enemyTimer2)
+    	{
+    		genEnemy = true;
+    	}
+    	if(shootBeam&&playerShip.powerAmount >0){
+    		isShooting = false;
+    		genBeam = true;
+    		shootBeam = false;
+    		
+    	}
+    	if(genBeam)
+    	{
+    		Beam = new BeamPower(0.0f,0.45f,0.2f,2.0f);
+    		Beam.loadGLTexture(gl, bitmaps[10]);
+    		playerShip.powerAmount--;
+    		isFiringBeam = true;
+    		genBeam = false;
+    	}
+    	
+    	if(isFiringBeam){
+    		Beam.timeRe-=elapsed;
+    		if(Beam.timeRe <=0.0f){
+    			isFiringBeam = false;
+    			isShooting = true;
+    		}
+    		if(Beam.timeRe<=0.5f)
+    			Beam.loadGLTexture(gl, bitmaps[11]);
+    		else if(Beam.timeRe<=1.0f)
+    			Beam.loadGLTexture(gl, bitmaps[10]);
+    		else if(Beam.timeRe<=1.5f)
+    			Beam.loadGLTexture(gl, bitmaps[11]);
+    		else if(Beam.timeRe<=2.0f)
+    			Beam.loadGLTexture(gl, bitmaps[10]);
+    		else if(Beam.timeRe<=2.5f)
+    			Beam.loadGLTexture(gl, bitmaps[11]);
+    	}
+    	if(isShooting&&genBullet){
+    		//if (bulletOnScreen <=MAX_BULLET && genBullet) {
+    			if (bulletCount == MAX_BULLET ) bulletCount = 0;
+    		 bulletArray[bulletCount]   = new Bullet(playerShip.getShootX()+0.0f,playerShip.getShootY(),0.025f,0.05f);
+    		 bulletArray[bulletCount].loadGLTexture(gl, bitmaps[5]);
+    		 bulletCount++;
+    		
+    		 //if(bulletOnScreen<MAX_BULLET)
+    		 //bulletOnScreen++;
+    		//}
+    	
+    	}
+    	for(int i =0;i<4;i++){
+    		if(genEnemy){
+    			int t = randomG.nextInt(2)+1;
+
+    			if (enemyCount == MAX_ENEMY) enemyCount = 0;
+    			if(i==0)
+    				enemyArray[enemyCount]   = new EnemyShip(gameBoss.shoot1x(),gameBoss.shoot1y(),0.1f,0.1f);
+    			else if(i==1)
+    				enemyArray[enemyCount]   = new EnemyShip(gameBoss.shoot2x(),gameBoss.shoot2y(),0.1f,0.1f);
+    			else if(i==2)
+    				enemyArray[enemyCount]   = new EnemyShip(gameBoss.shoot3x(),gameBoss.shoot3y(),0.1f,0.1f);
+    			else if(i==3)
+    				enemyArray[enemyCount]   = new EnemyShip(gameBoss.shoot4x(),gameBoss.shoot4y(),0.1f,0.1f);
+    		
+    			enemyArray[enemyCount].loadGLTexture(gl, bitmaps2[t]);
+    			enemyArray[enemyCount].sdy = enemyArray[enemyCount].centerY;
+    			enemyArray[enemyCount].sdx = enemyArray[enemyCount].centerX;
+    			
+    			enemyCount++;
+    			
+	    	}
+    	}
+    	
+    	 for( int j = 0; j<MAX_ENEMY; j++){
+    		 if ((enemyArray[j] != null)&&!invincible){
+    			 boolean collideShip = checkCollisionShip(enemyArray[j]);
+    			 if(collideShip){
+    	 			 playerShip.life--;
+    	 			 invincible = true;
+    	 		 
+    			 }
+    		 }
+    	 }
+    	 for( int j = 0; j<MAX_BULLET; j++){
+    		 if(bulletArray[j]!=null&&isShooting){
+    			 boolean collide = checkCollision(bulletArray[j],gameBoss);
+    			 if(collide){
+    				 gameBoss.life--;
+    				 if(gameBoss.life == 0){
+    					 dEnemyShip = new deadEnemyShip[MAX_ENEMY];
+    					 dEnemyShip[0] = new deadEnemyShip(gameBoss.getLeftBound(),
+									(bulletArray[j].getLeftBound()+bulletArray[j].getRightBound())/2,
+									gameBoss.getRightBound(),gameBoss.getCY(),gameBoss.getWidth(),gameBoss.getHeight());
+    					 dEnemyShip[0].loadGLTexture(gl, gameBoss.bitmap);
+    						bossTime = false;
+    			        	score+=1000;
+    			        	this.scoreB.loadGLTextureB(gl, this.context);
+    			        	enemyArray = new EnemyShip[MAX_ENEMY];
+    				 }
+    				 bulletArray[j]=null;
+    			 }
+    		 }
+
+    	 }
+    	 if(isFiringBeam&&bossTime){
+    		 boolean collide = checkCollision(this.Beam,gameBoss);
+			 if(collide){
+				 gameBoss.life--;
+				 if(gameBoss.life == 0){
+					 dEnemyShip = new deadEnemyShip[MAX_ENEMY];
+					 dEnemyShip[0] = new deadEnemyShip(gameBoss.getLeftBound(),
+								(Beam.getLeftBound()+Beam.getRightBound())/2,
+								gameBoss.getRightBound(),gameBoss.getCY(),gameBoss.getWidth(),gameBoss.getHeight());
+					 dEnemyShip[0].loadGLTexture(gl, gameBoss.bitmap);
+						bossTime = false;
+			        	score+=1000;
+			        	this.scoreB.loadGLTextureB(gl, this.context);
+			        	enemyArray = new EnemyShip[MAX_ENEMY];
+				 }
+			 }
+    	 }
+    	if(genBullet ){
+    		 genBullet = false;
+    		 totalTime = 0.0f;
+    	}
+    	if(genEnemy)
+    	{
+    		genEnemy = false;
+    		enemyTimer1 = 0.0f;
+    	}
+    	
+        
+        if(playerShip.life == 0){
+        	gameOver = true;
+        }
+        if(gameBoss.life == 0){
+        
+        	
+        }
+    	
+    }
     public void invincibleani(float elapsed,GL10 gl,boolean called)
     {
     
@@ -495,19 +697,21 @@ public class glRenderer implements GLSurfaceView.Renderer {
     		
     }
     public boolean checkCollisionShip( EnemyShip e){
-    	if(playerShip.getLeftBound()<= e.getRightBound() && playerShip.getRightBound()>=e.getLeftBound()&& playerShip.getNorthBound()>= e.getSouthBound()&& playerShip.getSouthBound()<= e.getNorthBound())
+    	if(playerShip.getLeftBound()+.1f<= e.getRightBound() && playerShip.getRightBound()-.1f>=e.getLeftBound()&& playerShip.getNorthBound()-.1f>= e.getSouthBound()+.1f&& playerShip.getSouthBound()<= e.getNorthBound())
     		return true;
     	else return false;
     		
     }
     public void renderBackground(GL10 gl){
-    	if(dyBackground <= -2.0) dyBackground = 0.0f;
-        Matrix.setIdentityM(mTranslationMatrix, 0);
-        Matrix.translateM(mTranslationMatrix, 0, 0, dyBackground, 0);
-        Matrix.multiplyMM(mScratch, 0,mMVPMatrix, 0, mTranslationMatrix , 0);
+    	background.dy+=(0.1*dy);
+    	if(background.dy>=1.0f)
+    		background.dy = 0.0f+(background.dy-1.0f);
+        ///Matrix.setIdentityM(mTranslationMatrix, 0);
+       // Matrix.translateM(mTranslationMatrix, 0, 0, dyBackground, 0);
+       // Matrix.multiplyMM(mScratch, 0,mMVPMatrix, 0, mTranslationMatrix , 0);
         //bulletArray[i].loadGLTexture(gl, this.context);
-    	background.draw(mScratch);
-    	background1.draw(mScratch);
+    	background.drawB(mMVPMatrix);
+    	
     }
     public void renderbullet(GL10 gl){
     	
@@ -528,28 +732,52 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	
 
     }
+    public void renderBoss(GL10 gl){
+    	if(gameBoss.getCY() >=0.0f)
+    		gameBoss.dy-=dy/2;
+    	gameBoss.dAngle+=dAngle;
+    	Matrix.setIdentityM(mRotationMatrix, 0);
+    	Matrix.setIdentityM(mTranslationMatrix, 0);
+        Matrix.translateM(mTranslationMatrix, 0, 0, gameBoss.dy, 0);
+		Matrix.rotateM(mRotationMatrix, 0, (float)gameBoss.dAngle, 0.0f, 0.0f, 1.0f);
+		Matrix.multiplyMM(mScratch,0,mRotationMatrix,0,mTranslationMatrix,0);
+		Matrix.multiplyMM(mScratch, 0,mMVPMatrix, 0,mScratch , 0);
+		gameBoss.draw(mScratch,mMVPMatrix);
+    }
     
     public void renderEnemyShip(GL10 gl){
 
         for( int i = 0; i<MAX_ENEMY; i++){
-        	if(enemyArray[i] != null){
         	
-        		enemyArray[i].dy-=dy;
-        		if(enemyArray[i].dx>0.2f){
-        			movex = -movex;
-        			enemyArray[i].dx = 0.2f;
-        		}
-        		if(enemyArray[i].dx <-0.2f){
-        			movex = -movex;
-        			enemyArray[i].dx = -0.2f;
-        		}
-        			enemyArray[i].dx+=(movex*dy);
-        		Matrix.setIdentityM(mTranslationMatrix, 0);
+        	if(enemyArray[i] != null){
+        		if(!bossTime){
+        			enemyArray[i].dy-=dy;
+        			if(enemyArray[i].dx>0.2f){
+        				movex = -movex;
+        				enemyArray[i].dx = 0.2f;
+        			}
+        			if(enemyArray[i].dx <-0.2f){
+        				movex = -movex;
+        				enemyArray[i].dx = -0.2f;
+        			}
+        				enemyArray[i].dx+=(movex*dy);
+        				Matrix.setIdentityM(mTranslationMatrix, 0);
  
-        		Matrix.translateM(mTranslationMatrix, 0, enemyArray[i].dx, enemyArray[i].dy, 0);
-        		Matrix.multiplyMM(mScratch, 0,mMVPMatrix, 0,mTranslationMatrix , 0);
-        		//bulletArray[i].loadGLTexture(gl, this.context);
-        		enemyArray[i].draw(mScratch);
+        				Matrix.translateM(mTranslationMatrix, 0, enemyArray[i].dx, enemyArray[i].dy, 0);
+        				Matrix.multiplyMM(mScratch, 0,mMVPMatrix, 0,mTranslationMatrix , 0);
+        				//bulletArray[i].loadGLTexture(gl, this.context);
+        				enemyArray[i].draw(mScratch);
+        		}
+        		if(bossTime){
+        			enemyArray[i].dx = (enemyArray[i].dx)+(dy*enemyArray[i].sdx);
+        			enemyArray[i].dy = (enemyArray[i].dy)+(dy*enemyArray[i].sdy);
+        			Matrix.setIdentityM(mTranslationMatrix, 0);
+        			 
+    				Matrix.translateM(mTranslationMatrix, 0, enemyArray[i].dx, enemyArray[i].dy, 0);
+    				Matrix.multiplyMM(mScratch, 0,mMVPMatrix, 0,mTranslationMatrix , 0);
+    				//bulletArray[i].loadGLTexture(gl, this.context);
+    				enemyArray[i].draw(mScratch);
+        		}
         	}
         }
     	
@@ -559,10 +787,11 @@ public class glRenderer implements GLSurfaceView.Renderer {
 
     }
     public void renderDeadEnemy(GL10 gl){
+    	
 
         for( int i = 0; i<MAX_ENEMY; i++){
-        	if(dEnemyShip[i] != null){
         	
+        	if(dEnemyShip[i] != null){
         		dEnemyShip[i].dx+=(dy);
         		dEnemyShip[i].dy+=(dy*2.0f);
         		Matrix.setIdentityM(mTranslationMatrix, 0);
@@ -570,6 +799,8 @@ public class glRenderer implements GLSurfaceView.Renderer {
         		Matrix.multiplyMM(mScratch, 0,mMVPMatrix, 0,mTranslationMatrix , 0);
         		//bulletArray[i].loadGLTexture(gl, this.context);
         		dEnemyShip[i].draw(mScratch);
+        		if (dEnemyShip[i].dy >= 2.0f)
+            		dEnemyShip[i] = null;
         	}
         }
     }

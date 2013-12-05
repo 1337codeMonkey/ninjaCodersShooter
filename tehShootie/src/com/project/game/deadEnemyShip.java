@@ -33,7 +33,10 @@ public class deadEnemyShip {
 		 mSquare2.loadGLTexture(gl, bitmap);
 	 }
 	 public void draw(float[] mvpMatrix) {
-		
+		 if(mSquare2.opacity>0.2f)
+			mSquare2.opacity-=0.1f;
+		 if(mSquare1.opacity>0.2f)
+			mSquare1.opacity-=0.1f;
 		 mSquare2.draw(mvpMatrix,2.0f*(float)Math.pow(dx, 2));
 		 mSquare1.draw(mvpMatrix,-2.0f*(float)Math.pow(dx, 2));
 		 

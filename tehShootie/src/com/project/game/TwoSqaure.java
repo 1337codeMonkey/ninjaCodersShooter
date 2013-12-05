@@ -31,10 +31,12 @@ class TwoSquare {
 
     private final String fragmentShaderCode =
         "precision mediump float;" +
+        "uniform float opacity; "+
         "uniform sampler2D u_TextureUnit;"+
         "varying vec2 v_TextureCoordinates;"+
         "void main() {" +
         "  gl_FragColor = texture2D(u_TextureUnit, v_TextureCoordinates);" +
+        "  gl_FragColor.a *= opacity;" +
         "}";
 
     private final FloatBuffer vertexBuffer;
@@ -47,9 +49,11 @@ class TwoSquare {
     private int mMVPMatrixHandle;
     private int mTextureUniformHandle;
     private int mTextureCoordinateHandle;
+    private int mOpacityHandle;
     float[] mTranslationMatrix = new float[16];
     float[] mScratch = new float[16];
     public float dy =0;
+    public float opacity = 1.0f;
 
     // number of coordinates per vertex in this array
     static final int COORDS_PER_VERTEX = 3;
@@ -167,7 +171,8 @@ class TwoSquare {
         
         mTextureUniformHandle = GLES20.glGetUniformLocation(mProgram, "u_TextureUnit");
         mTextureCoordinateHandle = GLES20.glGetAttribLocation(mProgram, "a_TexCoordinate");
-     
+        mOpacityHandle = GLES20.glGetUniformLocation(mProgram, "opacity");
+        GLES20.glUniform1f(mOpacityHandle, this.opacity);
         
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         
