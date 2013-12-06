@@ -130,6 +130,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
         //mTriangle.loadGLTexture(unused, this.context);
        audio = new AndroidAudio(act);
        music = (AndroidMusic) audio.newMusic("vemiRuma.ogg");
+       music.play();
        music.setLooping(true);
    
         
@@ -328,7 +329,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	
     	
     	
-    	if(totalTime > 0.5f){
+    	if(totalTime > 0.3f){
     		genBullet = true;
     	}
     	if(enemyTimer1 > enemyTimer2)
@@ -484,7 +485,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
         			 }
         		 }
         	}
-        if(playerShip.life == 0){
+        if(playerShip.life <= 0){
         	gameOver = true;
         }
         if(score >= 50 && score < 100)
@@ -510,7 +511,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	if(invincible)
     		invincibleani(elapsed,gl,true);
     	
-    	if(totalTime > 0.5f){
+    	if(totalTime > 0.3f){
     		genBullet = true;
     	}
     	if(enemyTimer1 > enemyTimer2)
@@ -562,7 +563,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	
     	}
     	for(int i =0;i<4;i++){
-    		if(genEnemy){
+    		if(genEnemy&&gameBoss.getCY()<=0.0f){
     			int t = randomG.nextInt(2)+1;
 
     			if (enemyCount == MAX_ENEMY) enemyCount = 0;
@@ -643,7 +644,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	}
     	
         
-        if(playerShip.life == 0){
+        if(playerShip.life <= 0){
         	gameOver = true;
         }
         if(gameBoss.life == 0){
@@ -717,7 +718,7 @@ public class glRenderer implements GLSurfaceView.Renderer {
     	
         for( int i = 0; i<MAX_BULLET; i++){
         	if (bulletArray[i] != null){
-        	bulletArray[i].dy+=dy;
+        	bulletArray[i].dy+=2*dy;
             
             Matrix.setIdentityM(mTranslationMatrix, 0);
             Matrix.translateM(mTranslationMatrix, 0, 0, bulletArray[i].dy, 0);

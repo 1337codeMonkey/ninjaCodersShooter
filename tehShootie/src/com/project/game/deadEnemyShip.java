@@ -16,10 +16,10 @@ public class deadEnemyShip {
 		float scale = (x2-x1)/width;
 		 float textureCoords1[] = { 0.0f, 0.0f,
                  0.0f, 1.0f,
-                 1.0f*scale, 1.0f,
-                 1.0f*scale, 0.0f};
-		 float textureCoords2[] = { 0.0f, 0.0f,
-                 0.0f, 1.0f,
+                 scale, 1.0f,
+                 scale, 0.0f};
+		 float textureCoords2[] = { scale, 0.0f,
+                 scale, 1.0f,
                  1.0f, 1.0f,
                  1.0f, 0.0f};
 		float width1 = Math.abs(x2-x1);
@@ -37,7 +37,7 @@ public class deadEnemyShip {
 			mSquare2.opacity-=0.1f;
 		 if(mSquare1.opacity>0.2f)
 			mSquare1.opacity-=0.1f;
-		 mSquare2.draw(mvpMatrix,2.0f*(float)Math.pow(dx, 2));
+		 mSquare2.draw(mvpMatrix,+2.0f*(float)Math.pow(dx, 2));
 		 mSquare1.draw(mvpMatrix,-2.0f*(float)Math.pow(dx, 2));
 		 
 	 }
